@@ -1,5 +1,0 @@
-streamlit==1.30.0
-chardet==5.2.0
-ebooklib==0.18
-requests==2.31.0
-easyocr==1.7.1
