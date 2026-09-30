@@ -23,9 +23,38 @@ type Image struct {
 	Data []byte
 }
 
-// ReadZip returns the images in a zip, in natural filename order.
-// Non-image entries and macOS metadata are skipped.
-func ReadZip(data []byte) ([]Image, error) {
+// Read returns the images among files, expanding zips, in natural filename
+// order. Other files and macOS metadata are skipped.
+func Read(files []Image) ([]Image, error) {
+	var imgs []Image
+	for _, f := range files {
+		if bytes.HasPrefix(f.Data, []byte("PK\x03\x04")) {
+			zimgs, err := readZip(f.Data)
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", f.Name, err)
+			}
+			imgs = append(imgs, zimgs...)
+			continue
+		}
+		if skip(f.Name) {
+			continue
+		}
+		if len(f.Data) > MaxImageSize {
+			return nil, fmt.Errorf("%s: larger than %d MiB", f.Name, MaxImageSize>>20)
+		}
+		if _, _, ok := epub.ImageType(f.Data); ok {
+			imgs = append(imgs, f)
+		}
+	}
+	if len(imgs) == 0 {
+		return nil, errors.New("no PNG, JPEG, GIF or WebP images found")
+	}
+
+	slices.SortStableFunc(imgs, func(a, b Image) int { return NaturalCompare(a.Name, b.Name) })
+	return imgs, nil
+}
+
+func readZip(data []byte) ([]Image, error) {
 	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
 		return nil, fmt.Errorf("read zip: %w", err)
@@ -43,16 +72,10 @@ func ReadZip(data []byte) ([]Image, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", f.Name, err)
 		}
-		if _, _, ok := epub.ImageType(b); !ok {
-			continue
+		if _, _, ok := epub.ImageType(b); ok {
+			imgs = append(imgs, Image{Name: f.Name, Data: b})
 		}
-		imgs = append(imgs, Image{Name: f.Name, Data: b})
 	}
-	if len(imgs) == 0 {
-		return nil, errors.New("no PNG, JPEG, GIF or WebP images in the zip")
-	}
-
-	slices.SortStableFunc(imgs, func(a, b Image) int { return NaturalCompare(a.Name, b.Name) })
 	return imgs, nil
 }
 

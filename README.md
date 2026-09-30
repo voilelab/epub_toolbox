@@ -25,8 +25,8 @@ Split a novel's plain text file into chapters and build an EPUB.
 
 Pack images into an EPUB, one image per page.
 
-1. Choose a zip file of images (PNG, JPEG, GIF or WebP). Pages follow natural
-   filename order (`2.png` before `10.png`).
+1. Choose images (PNG, JPEG, GIF or WebP), zips of them, or both. Pages follow
+   natural filename order (`2.png` before `10.png`).
 2. Fill in the book's metadata.
 3. Click `Download` to build and save the EPUB.
 
@@ -55,7 +55,7 @@ Actions in the repo settings).
 
 - `internal/epub`: EPUB 3 writer, standard library only
 - `internal/novel`: encoding detection, chapter splitting
-- `internal/imgbook`: zip reading, image book
+- `internal/imgbook`: image and zip reading, image book
 - `internal/fetch`: cover download
 - `cmd/epub_toolbox`: ToolGUI UI; `main_wasm.go` for the browser,
   `main_server.go` for a native binary
