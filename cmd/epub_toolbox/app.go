@@ -8,11 +8,10 @@ import (
 func newApp() *tgframe.App {
 	app := tgframe.NewApp()
 	app.SetTitle("EPUB Toolbox")
-	// No page emoji: toolgui v0.7.2's wasm index.html crashes with one.
-	app.AddPage("index", "EPUB Toolbox", HomePage)
-	app.AddPage("novel", "Novel TXT-EPUB Builder", NovelPage)
-	app.AddPage("regex", "Regex for Filter Novel Titles", RegexPage)
-	app.AddPage("images", "Images-EPUB Builder", ImagesPage)
+	app.AddPageByConfig(&tgframe.PageConfig{Name: "index", Title: "EPUB Toolbox", Emoji: "🧰"}, HomePage)
+	app.AddPageByConfig(&tgframe.PageConfig{Name: "novel", Title: "Novel TXT-EPUB Builder", Emoji: "📘"}, NovelPage)
+	app.AddPageByConfig(&tgframe.PageConfig{Name: "regex", Title: "Regex for Filter Novel Titles", Emoji: "📑"}, RegexPage)
+	app.AddPageByConfig(&tgframe.PageConfig{Name: "images", Title: "Images-EPUB Builder", Emoji: "🖼️"}, ImagesPage)
 	return app
 }
 
@@ -29,7 +28,7 @@ Split a novel's plain text file into chapters and build an EPUB.
 1. Choose the TXT file containing the novel.
 2. Split it into chapters with regular expressions matching chapter titles.
 3. Fill in the book's metadata.
-4. Click **Prepare EPUB**, then download the file.
+4. Click **Download** to build and save the EPUB.
 
 ### 🖼️ Images-EPUB Builder
 
@@ -37,7 +36,7 @@ Pack images into an EPUB, one image per page.
 
 1. Choose a zip file of images (PNG, JPEG, GIF or WebP), sorted by filename.
 2. Fill in the book's metadata.
-3. Click **Prepare EPUB**, then download the file.
+3. Click **Download** to build and save the EPUB.
 
 Source: [voilelab/epub_toolbox](https://github.com/voilelab/epub_toolbox), built with [ToolGUI](https://github.com/voilelab/toolgui).`)
 	return nil

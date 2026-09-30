@@ -1,13 +1,11 @@
 package main
 
 import (
-	"encoding/base64"
 	"fmt"
 	"path"
 	"strconv"
 	"strings"
 
-	"github.com/voilelab/epub_toolbox/internal/epub"
 	"github.com/voilelab/epub_toolbox/internal/imgbook"
 	"github.com/voilelab/toolgui/toolgui/tgcomp"
 	"github.com/voilelab/toolgui/toolgui/tgframe"
@@ -54,7 +52,7 @@ func ImagesPage(p *tgframe.Params) error {
 	if idx := tgcomp.Select(tabPreview, "Filename", names, (&tgcomp.SelectConf{
 		Base: tgframe.Base{ID: "image_" + fileKey},
 	}).SetDefault(0)); idx != nil {
-		tgcomp.Image(tabPreview, dataURI(imgs[*idx].Data), &tgcomp.ImageConf{Width: "360px"})
+		tgcomp.Image(tabPreview, imgs[*idx].Data, &tgcomp.ImageConf{Width: "360px"})
 	}
 
 	defTitle := strings.TrimSuffix(path.Base(file.Name), ".zip")
@@ -64,8 +62,7 @@ func ImagesPage(p *tgframe.Params) error {
 		firstAsCover = tgcomp.Checkbox(tabMeta, "Use the first image as the cover")
 	}
 
-	key := hashOf(fileKey, meta.key(), firstAsCover)
-	exportEpub(p, key, meta.Title, func() ([]byte, error) {
+	exportEpub(p, meta.Title, func() ([]byte, error) {
 		cover, err := meta.cover(p.Context)
 		if err != nil {
 			return nil, fmt.Errorf("book cover: %w", err)
@@ -79,9 +76,4 @@ func ImagesPage(p *tgframe.Params) error {
 		}, imgs)
 	})
 	return nil
-}
-
-func dataURI(b []byte) string {
-	mime, _, _ := epub.ImageType(b)
-	return "data:" + mime + ";base64," + base64.StdEncoding.EncodeToString(b)
 }

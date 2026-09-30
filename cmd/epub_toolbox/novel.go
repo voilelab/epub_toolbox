@@ -65,7 +65,7 @@ func NovelPage(p *tgframe.Params) error {
 	defIntro := strings.TrimSpace(chapters.head.Content(longChapter))
 	meta := metaForm(tabMeta, fileKey, defTitle, defIntro)
 
-	exportEpub(p, hashOf(chapters.key, meta.key()), meta.Title, func() ([]byte, error) {
+	exportEpub(p, meta.Title, func() ([]byte, error) {
 		cover, err := meta.cover(p.Context)
 		if err != nil {
 			return nil, fmt.Errorf("book cover: %w", err)
@@ -81,7 +81,6 @@ func NovelPage(p *tgframe.Params) error {
 type chapterSet struct {
 	all  []novel.Chapter
 	head novel.Chapter // before RemoveEmpty, for the default intro
-	key  string
 }
 
 func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesKey string) (chapterSet, bool) {
@@ -102,11 +101,10 @@ func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesK
 
 	splitKey := hashOf(linesKey, strings.Join(allow, "\n"), strings.Join(block, "\n"))
 	chs := memo(p.State, "chapters", splitKey, func() []novel.Chapter { return novel.Split(lines, m) })
-	set := chapterSet{all: chs, head: chs[0], key: splitKey}
+	set := chapterSet{all: chs, head: chs[0]}
 
 	if tgcomp.Checkbox(c, "Remove empty chapters") {
 		set.all = novel.RemoveEmpty(chs)
-		set.key += "-nonempty"
 	}
 
 	rows := make([][]string, len(set.all))

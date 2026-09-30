@@ -50,15 +50,6 @@ type bookMeta struct {
 	coverURL  string
 }
 
-// key identifies the inputs, for invalidating a prepared EPUB.
-func (m bookMeta) key() string {
-	cover := m.coverURL
-	if m.coverFile != nil {
-		cover = fmt.Sprintf("file:%s:%d", m.coverFile.Name, m.coverFile.Size)
-	}
-	return hashOf(m.Title, m.Author, m.Intro, m.Language, cover)
-}
-
 func (m bookMeta) hasCover() bool {
 	return m.coverFile != nil || m.coverURL != ""
 }
@@ -74,15 +65,15 @@ func (m bookMeta) cover(ctx context.Context) ([]byte, error) {
 	return nil, nil
 }
 
-// metaForm draws the metadata inputs. idSuffix resets them for a new input file.
-func metaForm(c *tgframe.Container, idSuffix, defTitle, defIntro string) bookMeta {
+// metaForm draws the metadata inputs. resetKey resets them for a new input file.
+func metaForm(c *tgframe.Container, resetKey, defTitle, defIntro string) bookMeta {
 	m := bookMeta{
 		Title: tgcomp.Textbox(c, "Title", &tgcomp.TextboxConf{
-			Base: tgframe.Base{ID: "title_" + idSuffix}, Default: defTitle,
+			Default: defTitle, ResetKey: resetKey,
 		}),
 		Author: tgcomp.Textbox(c, "Author"),
 		Intro: tgcomp.Textarea(c, "Introduction", &tgcomp.TextareaConf{
-			Base: tgframe.Base{ID: "intro_" + idSuffix}, Default: defIntro, Height: 8,
+			Default: defIntro, ResetKey: resetKey, Height: 8,
 		}),
 		Language: tgcomp.Textbox(c, "Language", &tgcomp.TextboxConf{
 			Default: "zh-TW", Placeholder: "BCP 47 tag, e.g. zh-TW, en",
@@ -100,36 +91,11 @@ func metaForm(c *tgframe.Container, idSuffix, defTitle, defIntro string) bookMet
 	return m
 }
 
-// preparedEpub is the last EPUB built, tagged with its inputs.
-type preparedEpub struct {
-	key  string
-	data []byte
-}
-
-// exportEpub draws the Prepare button and, once built for the current inputs
-// (key), the download button.
-func exportEpub(p *tgframe.Params, key, title string, build func() ([]byte, error)) {
-	c := p.Main
-	tgcomp.Divider(c)
-
-	if tgcomp.Button(c, "Prepare EPUB") {
-		status := tgcomp.Status(c, "Preparing EPUB...", &tgcomp.StatusConf{Expanded: true})
-		data, err := build()
-		if err != nil {
-			status.Fail("Preparing EPUB failed")
-			tgcomp.MessageDanger(c, err.Error())
-			return
-		}
-		p.State.SetFuncCache("epub", preparedEpub{key, data})
-		status.Complete(fmt.Sprintf("Preparing EPUB complete! (%.1f KiB)", float64(len(data))/1024))
-	}
-
-	prepared, ok := p.State.GetFuncCache[preparedEpub]("epub")
-	if !ok || prepared.key != key {
-		return
-	}
+// exportEpub draws the download button; build runs only on click.
+func exportEpub(p *tgframe.Params, title string, build func() ([]byte, error)) {
+	tgcomp.Divider(p.Main)
 	filename := safeFilename(title) + ".epub"
-	tgcomp.DownloadFile(c, "Download "+filename, prepared.data, &tgcomp.DownloadFileConf{
+	tgcomp.DownloadFileFunc(p.Main, "Download "+filename, build, &tgcomp.DownloadFileConf{
 		Filename: filename,
 		MIME:     "application/epub+zip",
 	})
