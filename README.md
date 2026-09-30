@@ -19,16 +19,16 @@ Split a novel's plain text file into chapters and build an EPUB.
 2. Split it into chapters with regular expressions matching chapter titles,
    plus a block list for lines that must not be titles.
 3. Fill in the book's metadata.
-4. Click `Prepare EPUB`, then download the EPUB.
+4. Click `Download` to build and save the EPUB.
 
 ### 🖼️ Images-EPUB Builder
 
 Pack images into an EPUB, one image per page.
 
-1. Choose a zip file of images (PNG, JPEG, GIF or WebP). Pages follow natural
-   filename order (`2.png` before `10.png`).
+1. Choose images (PNG, JPEG, GIF or WebP), zips of them, or both. Pages follow
+   natural filename order (`2.png` before `10.png`).
 2. Fill in the book's metadata.
-3. Click `Prepare EPUB`, then download the EPUB.
+3. Click `Download` to build and save the EPUB.
 
 A cover URL only works when its host allows cross-origin reads; otherwise
 download the image and upload it.
@@ -55,7 +55,7 @@ Actions in the repo settings).
 
 - `internal/epub`: EPUB 3 writer, standard library only
 - `internal/novel`: encoding detection, chapter splitting
-- `internal/imgbook`: zip reading, image book
+- `internal/imgbook`: image and zip reading, image book
 - `internal/fetch`: cover download
 - `cmd/epub_toolbox`: ToolGUI UI; `main_wasm.go` for the browser,
   `main_server.go` for a native binary

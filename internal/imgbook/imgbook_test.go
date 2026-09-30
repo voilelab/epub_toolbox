@@ -24,7 +24,7 @@ func makeZip(t *testing.T, files map[string]string) []byte {
 	return buf.Bytes()
 }
 
-func TestReadZip(t *testing.T) {
+func TestRead(t *testing.T) {
 	data := makeZip(t, map[string]string{
 		"p10.png":           png,
 		"p2.png":            png,
@@ -33,7 +33,12 @@ func TestReadZip(t *testing.T) {
 		"__MACOSX/._p1.jpg": png,
 		".DS_Store":         png,
 	})
-	imgs, err := ReadZip(data)
+	imgs, err := Read([]Image{
+		{"book.zip", data},
+		{"p3.gif", []byte("GIF89a")},
+		{"readme.md", []byte("hi")},
+		{".hidden.png", []byte(png)},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,16 +46,16 @@ func TestReadZip(t *testing.T) {
 	for _, img := range imgs {
 		names = append(names, img.Name)
 	}
-	if want := []string{"p1.jpg", "p2.png", "p10.png"}; !slices.Equal(names, want) {
+	if want := []string{"p1.jpg", "p2.png", "p3.gif", "p10.png"}; !slices.Equal(names, want) {
 		t.Errorf("names = %v, want %v", names, want)
 	}
 }
 
-func TestReadZipErrors(t *testing.T) {
-	if _, err := ReadZip([]byte("not a zip")); err == nil {
+func TestReadErrors(t *testing.T) {
+	if _, err := Read([]Image{{"a.zip", []byte("PK\x03\x04broken")}}); err == nil {
 		t.Error("want error for bad zip")
 	}
-	if _, err := ReadZip(makeZip(t, map[string]string{"a.txt": "x"})); err == nil {
+	if _, err := Read([]Image{{"a.zip", makeZip(t, map[string]string{"a.txt": "x"})}}); err == nil {
 		t.Error("want error for no images")
 	}
 }
