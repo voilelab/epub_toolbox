@@ -42,12 +42,6 @@ func hashBytes(b []byte) string {
 	return hex.EncodeToString(s[:])[:16]
 }
 
-// asciiID sets a file upload's ID; the server sends it in an HTTP header,
-// so an ID derived from a Chinese label breaks uploads.
-func asciiID(id string) *tgcomp.FileUploadConf {
-	return &tgcomp.FileUploadConf{Base: tgframe.Base{ID: id}}
-}
-
 // bookMeta is what metaForm collects.
 type bookMeta struct {
 	Title, Author, Intro, Language string
@@ -85,7 +79,7 @@ func metaForm(c *tgframe.Container, resetKey, defTitle, defIntro string) bookMet
 			Default: "zh-TW", Placeholder: "BCP 47 標籤，例如 zh-TW、en",
 		}),
 	}
-	m.coverFile = tgcomp.FileUpload(c, "封面", ".png,.jpg,.jpeg,.gif,.webp", asciiID("cover"))
+	m.coverFile = tgcomp.FileUpload(c, "封面", ".png,.jpg,.jpeg,.gif,.webp")
 	if m.coverFile == nil {
 		m.coverURL = strings.TrimSpace(tgcomp.Textbox(c, "封面網址"))
 	}
