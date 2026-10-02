@@ -1,61 +1,58 @@
-# 🧰 EPUB Toolbox
+# 🧰 EPUB 工具箱
 
 ![](preview.png)
 
-Build EPUB books from plain text novels or images. Written with
-[ToolGUI](https://github.com/voilelab/toolgui) and compiled to WebAssembly, so
-it runs entirely in your browser: files never leave your computer.
+將純文字小說或圖片製作成 EPUB 電子書。以
+[ToolGUI](https://github.com/voilelab/toolgui) 撰寫並編譯為 WebAssembly，
+完全在瀏覽器中執行，檔案不會離開你的電腦。
 
-**Use it online: <https://voilelab.github.io/epub_toolbox/>**
+**線上使用：<https://voilelab.github.io/epub_toolbox/>**
 
-## Usage
+## 使用方式
 
-### 📘 Novel TXT-EPUB Builder
+### 📘 小說 TXT 轉 EPUB
 
-Split a novel's plain text file into chapters and build an EPUB.
+將小說純文字檔切分成章節並製作成 EPUB。
 
-1. Choose the TXT file containing the novel. The encoding (UTF-8, Big5,
-   GB18030, ...) is detected automatically and can be changed.
-2. Split it into chapters with regular expressions matching chapter titles,
-   plus a block list for lines that must not be titles.
-3. Fill in the book's metadata.
-4. Click `Download` to build and save the EPUB.
+1. 選擇小說的 TXT 檔。編碼（UTF-8、Big5、GB18030 等）會自動偵測，也可手動更改。
+2. 用比對章節標題的正規表示式切分章節，並可用封鎖清單排除不該是標題的行。
+3. 填寫書籍資訊。
+4. 按下 `下載` 製作並儲存 EPUB。
 
-### 🖼️ Images-EPUB Builder
+### 🖼️ 圖片轉 EPUB
 
-Pack images into an EPUB, one image per page.
+將圖片打包成 EPUB，每頁一張圖。
 
-1. Choose images (PNG, JPEG, GIF or WebP), zips of them, or both. Pages follow
-   natural filename order (`2.png` before `10.png`).
-2. Fill in the book's metadata.
-3. Click `Download` to build and save the EPUB.
+1. 選擇圖片（PNG、JPEG、GIF 或 WebP）、其 zip 壓縮檔，或兩者混用。頁面依檔名的
+   自然順序排列（`2.png` 在 `10.png` 之前）。
+2. 填寫書籍資訊。
+3. 按下 `下載` 製作並儲存 EPUB。
 
-A cover URL only works when its host allows cross-origin reads; otherwise
-download the image and upload it.
+封面網址僅在該網站允許跨來源讀取時可用；否則請先下載圖片再上傳。
 
-## Run
+## 執行
 
-Requires Go 1.27.1 or later (or `GOTOOLCHAIN=auto`).
+需要 Go 1.27.1 以上（或設定 `GOTOOLCHAIN=auto`）。
 
 ```bash
-# Browser (WebAssembly)
+# 瀏覽器（WebAssembly）
 go tool toolgui-wasm serve ./cmd/epub_toolbox
 
-# Static site in dist/
+# 靜態網站輸出至 dist/
 go tool toolgui-wasm build -o dist ./cmd/epub_toolbox
 
-# Local server at http://127.0.0.1:3000
+# 本機伺服器 http://127.0.0.1:3000
 go run ./cmd/epub_toolbox
 ```
 
-Pushing to `main` deploys to GitHub Pages (set the Pages source to GitHub
-Actions in the repo settings).
+推送到 `main` 會部署至 GitHub Pages（需在 repo 設定中將 Pages 來源設為 GitHub
+Actions）。
 
-## Project layout
+## 專案結構
 
-- `internal/epub`: EPUB 3 writer, standard library only
-- `internal/novel`: encoding detection, chapter splitting
-- `internal/imgbook`: image and zip reading, image book
-- `internal/fetch`: cover download
-- `cmd/epub_toolbox`: ToolGUI UI; `main_wasm.go` for the browser,
-  `main_server.go` for a native binary
+- `internal/epub`：EPUB 3 寫入器，僅使用標準函式庫
+- `internal/novel`：編碼偵測、章節切分
+- `internal/imgbook`：圖片與 zip 讀取、圖片書
+- `internal/fetch`：封面下載
+- `cmd/epub_toolbox`：ToolGUI 介面；`main_wasm.go` 供瀏覽器使用，
+  `main_server.go` 用於原生執行檔

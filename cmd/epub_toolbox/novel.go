@@ -20,12 +20,12 @@ const (
 )
 
 func NovelPage(p *tgframe.Params) error {
-	tgcomp.Title(p.Main, "📘 Novel TXT-EPUB Builder")
-	tgcomp.Text(p.Main, "Split a novel's plain text file into chapters and build an EPUB.")
+	tgcomp.Title(p.Main, "📘 小說 TXT 轉 EPUB")
+	tgcomp.Text(p.Main, "將小說純文字檔切分成章節並製作成 EPUB。")
 
-	file := tgcomp.FileUpload(p.Sidebar, "Choose a txt file", ".txt,text/plain")
+	file := tgcomp.FileUpload(p.Sidebar, "選擇 txt 檔", ".txt,text/plain", asciiID("novel_txt"))
 	if file == nil {
-		tgcomp.MessageInfo(p.Main, "👈 Please select a text file to process.")
+		tgcomp.MessageInfo(p.Main, "👈 請選擇要處理的文字檔。")
 		return nil
 	}
 	raw, err := file.Bytes()
@@ -35,31 +35,31 @@ func NovelPage(p *tgframe.Params) error {
 	fileKey := hashBytes(raw)
 
 	encs := memo(p.State, "encodings", fileKey, func() []string { return novel.Encodings(raw) })
-	encIdx := tgcomp.Select(p.Sidebar, "Encoding", encs, (&tgcomp.SelectConf{
+	encIdx := tgcomp.Select(p.Sidebar, "編碼", encs, (&tgcomp.SelectConf{
 		Base: tgframe.Base{ID: "encoding_" + fileKey},
 	}).SetDefault(0))
 	if encIdx == nil {
 		return nil
 	}
 	enc := encs[*encIdx]
-	removeEmptyLines := tgcomp.Checkbox(p.Sidebar, "Remove empty lines")
+	removeEmptyLines := tgcomp.Checkbox(p.Sidebar, "移除空行")
 
 	text := memo(p.State, "text", fileKey+enc, func() string { return novel.Decode(raw, enc) })
 	lines := memo(p.State, "lines", hashOf(fileKey, enc, removeEmptyLines), func() []string {
 		return novel.Lines(text, removeEmptyLines)
 	})
 
-	tabChapters, tabMeta := tgcomp.Tab2(p.Main, "Chapters", "Meta Data")
+	tabChapters, tabMeta := tgcomp.Tab2(p.Main, "章節", "書籍資訊")
 
 	chapters, ok := chaptersTab(p, tabChapters, lines, hashOf(fileKey, enc, removeEmptyLines))
 	if !ok {
 		return nil
 	}
 
-	tgcomp.Text(p.Sidebar, "Encoding: "+enc)
-	tgcomp.Text(p.Sidebar, "Lines: "+strconv.Itoa(len(lines)))
-	tgcomp.Text(p.Sidebar, "Char count: "+strconv.Itoa(utf8.RuneCountInString(text)))
-	tgcomp.Text(p.Sidebar, "Chapter count: "+strconv.Itoa(len(chapters.all)))
+	tgcomp.Text(p.Sidebar, "編碼："+enc)
+	tgcomp.Text(p.Sidebar, "行數："+strconv.Itoa(len(lines)))
+	tgcomp.Text(p.Sidebar, "字數："+strconv.Itoa(utf8.RuneCountInString(text)))
+	tgcomp.Text(p.Sidebar, "章節數："+strconv.Itoa(len(chapters.all)))
 
 	defTitle := strings.TrimSuffix(file.Name, ".txt")
 	defIntro := strings.TrimSpace(chapters.head.Content(longChapter))
@@ -68,7 +68,7 @@ func NovelPage(p *tgframe.Params) error {
 	exportEpub(p, meta.Title, func() ([]byte, error) {
 		cover, err := meta.cover(p.Context)
 		if err != nil {
-			return nil, fmt.Errorf("book cover: %w", err)
+			return nil, fmt.Errorf("封面：%w", err)
 		}
 		return novel.Build(novel.Meta{
 			Title: meta.Title, Author: meta.Author, Intro: meta.Intro,
@@ -84,13 +84,13 @@ type chapterSet struct {
 }
 
 func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesKey string) (chapterSet, bool) {
-	allow := nonEmptyLines(tgcomp.Textarea(c, "Title allow list", &tgcomp.TextareaConf{Default: "第.*章.*"}))
-	tgcomp.Caption(c, "Any line matching one of these regular expressions (from the line start) is a chapter title.")
-	block := nonEmptyLines(tgcomp.Textarea(c, "Title block list"))
-	tgcomp.Caption(c, "Any line containing one of these lines won't be a title.")
+	allow := nonEmptyLines(tgcomp.Textarea(c, "標題允許清單", &tgcomp.TextareaConf{Default: "第.*章.*"}))
+	tgcomp.Caption(c, "符合任一正規表示式（從行首比對）的行即為章節標題。")
+	block := nonEmptyLines(tgcomp.Textarea(c, "標題封鎖清單"))
+	tgcomp.Caption(c, "包含任一行內容的行不會被視為標題。")
 
 	if slices.ContainsFunc(allow, func(s string) bool { return slices.Contains(block, s) }) {
-		tgcomp.MessageWarning(c, "Block list and allow list have a common line.")
+		tgcomp.MessageWarning(c, "封鎖清單與允許清單有相同的行。")
 	}
 
 	m, err := novel.NewMatcher(allow, block)
@@ -103,7 +103,7 @@ func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesK
 	chs := memo(p.State, "chapters", splitKey, func() []novel.Chapter { return novel.Split(lines, m) })
 	set := chapterSet{all: chs, head: chs[0]}
 
-	if tgcomp.Checkbox(c, "Remove empty chapters") {
+	if tgcomp.Checkbox(c, "移除空章節") {
 		set.all = novel.RemoveEmpty(chs)
 	}
 
@@ -111,7 +111,7 @@ func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesK
 	for i, ch := range set.all {
 		rows[i] = []string{strconv.Itoa(i), ch.Title, strconv.Itoa(len(ch.Lines)), snippet(ch.Content(3), 60)}
 	}
-	sel := tgcomp.DataFrame(c, []string{"Index", "Title", "Lines", "Content"}, rows, &tgcomp.DataFrameConf{
+	sel := tgcomp.DataFrame(c, []string{"編號", "標題", "行數", "內容"}, rows, &tgcomp.DataFrameConf{
 		Base:             tgframe.Base{ID: "chapters"},
 		PageSize:         10,
 		Selection:        tgcomp.SelectionModeSingle,
@@ -123,18 +123,18 @@ func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesK
 			{},
 		},
 	})
-	tgcomp.Caption(c, "Select a row to preview the chapter.")
+	tgcomp.Caption(c, "選擇一列以預覽章節。")
 
 	if slices.ContainsFunc(set.all, func(ch novel.Chapter) bool { return len(ch.Lines) > longChapter }) {
-		tgcomp.MessageWarning(c, fmt.Sprintf("Some chapters have more than %d lines; "+
-			"the title regex may be wrong.", longChapter))
+		tgcomp.MessageWarning(c, fmt.Sprintf("部分章節超過 %d 行，"+
+			"標題正規表示式可能有誤。", longChapter))
 	}
 
 	if len(sel) > 0 && sel[0] < len(set.all) {
 		ch := set.all[sel[0]]
-		exp := tgcomp.Expand(c, "Preview: "+ch.Title, true)
+		exp := tgcomp.Expand(c, "預覽："+ch.Title, true)
 		if len(ch.Lines) > previewLines {
-			tgcomp.Caption(exp, fmt.Sprintf("First %d of %d lines.", previewLines, len(ch.Lines)))
+			tgcomp.Caption(exp, fmt.Sprintf("顯示前 %d 行，共 %d 行。", previewLines, len(ch.Lines)))
 		}
 		tgcomp.Code(exp, ch.Content(previewLines), &tgcomp.CodeConf{Language: "text"})
 	}
