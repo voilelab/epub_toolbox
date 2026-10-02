@@ -23,7 +23,7 @@ func NovelPage(p *tgframe.Params) error {
 	tgcomp.Title(p.Main, "📘 小說 TXT 轉 EPUB")
 	tgcomp.Text(p.Main, "將小說純文字檔切分成章節並製作成 EPUB。")
 
-	file := tgcomp.FileUpload(p.Sidebar, "選擇 txt 檔", ".txt,text/plain")
+	file := tgcomp.FileUpload(p.Sidebar, "選擇 txt 檔", ".txt,text/plain", asciiID("novel_txt"))
 	if file == nil {
 		tgcomp.MessageInfo(p.Main, "👈 請選擇要處理的文字檔。")
 		return nil

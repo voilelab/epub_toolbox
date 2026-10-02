@@ -21,7 +21,7 @@ func ImagesPage(p *tgframe.Params) error {
 	tgcomp.Text(p.Main, "將圖片打包成 EPUB，每頁一張圖。")
 
 	files := tgcomp.MultiFileUpload(p.Sidebar, "選擇圖片或 zip 檔",
-		".zip,application/zip,.png,.jpg,.jpeg,.gif,.webp")
+		".zip,application/zip,.png,.jpg,.jpeg,.gif,.webp", asciiID("images"))
 	tgcomp.Caption(p.Sidebar, "PNG、JPEG、GIF 或 WebP，或其 zip 壓縮檔；"+
 		"頁面依檔名排序（2 在 10 之前）。")
 	if files == nil {
