@@ -16,7 +16,7 @@ type Chapter struct {
 }
 
 // HeadTitle is the title of the head chapter.
-const HeadTitle = "Head (Content before first title)"
+const HeadTitle = "開頭（第一個標題前的內容）"
 
 // Content joins the first limit lines, or all lines if limit <= 0.
 func (c Chapter) Content(limit int) string {
@@ -54,7 +54,7 @@ func NewMatcher(allow, block []string) (*Matcher, error) {
 	for _, a := range allow {
 		re, err := regexp.Compile("^(?:" + a + ")")
 		if err != nil {
-			return nil, fmt.Errorf("invalid regex %q: %w", a, err)
+			return nil, fmt.Errorf("無效的正規表示式 %q：%w", a, err)
 		}
 		m.allow = append(m.allow, re)
 	}
@@ -122,7 +122,7 @@ func Build(meta Meta, chs []Chapter) ([]byte, error) {
 		}
 	}
 	if meta.Intro != "" {
-		b.AddSection("Introduction", epub.Paragraphs(strings.Split(meta.Intro, "\n")))
+		b.AddSection("簡介", epub.Paragraphs(strings.Split(meta.Intro, "\n")))
 	}
 	for _, c := range chs {
 		if c.Head {

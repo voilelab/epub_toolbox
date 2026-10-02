@@ -88,7 +88,7 @@ func (b *Book) Write(w io.Writer) error {
 
 	m := *b
 	if m.Title == "" {
-		m.Title = "Untitled"
+		m.Title = "未命名"
 	}
 	if m.Language == "" {
 		m.Language = "und"
@@ -135,7 +135,7 @@ func (b *Book) Write(w io.Writer) error {
 	if m.cover != nil {
 		files = append(files, struct{ name, data string }{
 			"EPUB/cover.xhtml",
-			m.page("Cover", fmt.Sprintf(`<div class="cover"><img src="%s" alt="Cover"/></div>`, m.cover.href)),
+			m.page("封面", fmt.Sprintf(`<div class="cover"><img src="%s" alt="封面"/></div>`, m.cover.href)),
 		})
 	}
 	for _, s := range m.sections {

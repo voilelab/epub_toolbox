@@ -17,15 +17,15 @@ type pickedImages struct {
 }
 
 func ImagesPage(p *tgframe.Params) error {
-	tgcomp.Title(p.Main, "🖼️ Images-EPUB Builder")
-	tgcomp.Text(p.Main, "Pack images into an EPUB, one image per page.")
+	tgcomp.Title(p.Main, "🖼️ 圖片轉 EPUB")
+	tgcomp.Text(p.Main, "將圖片打包成 EPUB，每頁一張圖。")
 
-	files := tgcomp.MultiFileUpload(p.Sidebar, "Choose images or zips",
+	files := tgcomp.MultiFileUpload(p.Sidebar, "選擇圖片或 zip 檔",
 		".zip,application/zip,.png,.jpg,.jpeg,.gif,.webp")
-	tgcomp.Caption(p.Sidebar, "PNG, JPEG, GIF or WebP, or zips of them; "+
-		"pages follow filename order (2 before 10).")
+	tgcomp.Caption(p.Sidebar, "PNG、JPEG、GIF 或 WebP，或其 zip 壓縮檔；"+
+		"頁面依檔名排序（2 在 10 之前）。")
 	if files == nil {
-		tgcomp.MessageInfo(p.Main, "👈 Please select images or a zip file of images.")
+		tgcomp.MessageInfo(p.Main, "👈 請選擇圖片或圖片的 zip 壓縮檔。")
 		return nil
 	}
 	picked := make([]imgbook.Image, len(files))
@@ -49,15 +49,15 @@ func ImagesPage(p *tgframe.Params) error {
 		return nil
 	}
 	imgs := z.imgs
-	tgcomp.Text(p.Sidebar, "Image count: "+strconv.Itoa(len(imgs)))
+	tgcomp.Text(p.Sidebar, "圖片數："+strconv.Itoa(len(imgs)))
 
-	tabPreview, tabMeta := tgcomp.Tab2(p.Main, "Images Preview", "Book Meta")
+	tabPreview, tabMeta := tgcomp.Tab2(p.Main, "圖片預覽", "書籍資訊")
 
 	names := make([]string, len(imgs))
 	for i, img := range imgs {
 		names[i] = fmt.Sprintf("%d. %s", i+1, img.Name)
 	}
-	if idx := tgcomp.Select(tabPreview, "Filename", names, (&tgcomp.SelectConf{
+	if idx := tgcomp.Select(tabPreview, "檔名", names, (&tgcomp.SelectConf{
 		Base: tgframe.Base{ID: "image_" + fileKey},
 	}).SetDefault(0)); idx != nil {
 		tgcomp.Image(tabPreview, imgs[*idx].Data, &tgcomp.ImageConf{Width: "360px"})
@@ -71,13 +71,13 @@ func ImagesPage(p *tgframe.Params) error {
 	meta := metaForm(tabMeta, fileKey, defTitle, "")
 	firstAsCover := false
 	if !meta.hasCover() {
-		firstAsCover = tgcomp.Checkbox(tabMeta, "Use the first image as the cover")
+		firstAsCover = tgcomp.Checkbox(tabMeta, "以第一張圖片作為封面")
 	}
 
 	exportEpub(p, meta.Title, func() ([]byte, error) {
 		cover, err := meta.cover(p.Context)
 		if err != nil {
-			return nil, fmt.Errorf("book cover: %w", err)
+			return nil, fmt.Errorf("封面：%w", err)
 		}
 		if firstAsCover {
 			cover = imgs[0].Data

@@ -68,20 +68,20 @@ func (m bookMeta) cover(ctx context.Context) ([]byte, error) {
 // metaForm draws the metadata inputs. resetKey resets them for a new input file.
 func metaForm(c *tgframe.Container, resetKey, defTitle, defIntro string) bookMeta {
 	m := bookMeta{
-		Title: tgcomp.Textbox(c, "Title", &tgcomp.TextboxConf{
+		Title: tgcomp.Textbox(c, "書名", &tgcomp.TextboxConf{
 			Default: defTitle, ResetKey: resetKey,
 		}),
-		Author: tgcomp.Textbox(c, "Author"),
-		Intro: tgcomp.Textarea(c, "Introduction", &tgcomp.TextareaConf{
+		Author: tgcomp.Textbox(c, "作者"),
+		Intro: tgcomp.Textarea(c, "簡介", &tgcomp.TextareaConf{
 			Default: defIntro, ResetKey: resetKey, Height: 8,
 		}),
-		Language: tgcomp.Textbox(c, "Language", &tgcomp.TextboxConf{
-			Default: "zh-TW", Placeholder: "BCP 47 tag, e.g. zh-TW, en",
+		Language: tgcomp.Textbox(c, "語言", &tgcomp.TextboxConf{
+			Default: "zh-TW", Placeholder: "BCP 47 標籤，例如 zh-TW、en",
 		}),
 	}
-	m.coverFile = tgcomp.FileUpload(c, "Book cover", ".png,.jpg,.jpeg,.gif,.webp")
+	m.coverFile = tgcomp.FileUpload(c, "封面", ".png,.jpg,.jpeg,.gif,.webp")
 	if m.coverFile == nil {
-		m.coverURL = strings.TrimSpace(tgcomp.Textbox(c, "Book cover URL"))
+		m.coverURL = strings.TrimSpace(tgcomp.Textbox(c, "封面網址"))
 	}
 
 	m.Title = strings.TrimSpace(m.Title)
@@ -95,7 +95,7 @@ func metaForm(c *tgframe.Container, resetKey, defTitle, defIntro string) bookMet
 func exportEpub(p *tgframe.Params, title string, build func() ([]byte, error)) {
 	tgcomp.Divider(p.Main)
 	filename := safeFilename(title) + ".epub"
-	tgcomp.DownloadFileFunc(p.Main, "Download "+filename, build, &tgcomp.DownloadFileConf{
+	tgcomp.DownloadFileFunc(p.Main, "下載 "+filename, build, &tgcomp.DownloadFileConf{
 		Filename: filename,
 		MIME:     "application/epub+zip",
 	})
