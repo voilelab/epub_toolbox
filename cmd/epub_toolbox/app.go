@@ -8,6 +8,9 @@ import (
 
 var tr = i18n.T
 
+// langSwitch shows a link that reloads the app in the other language.
+var langSwitch bool
+
 func newApp() *tgframe.App {
 	app := tgframe.NewApp()
 	app.SetTitle(tr("EPUB 工具箱", "EPUB Toolbox"))
@@ -20,6 +23,9 @@ func newApp() *tgframe.App {
 
 func HomePage(p *tgframe.Params) error {
 	tgcomp.Title(p.Main, tr("🧰 EPUB 工具箱", "🧰 EPUB Toolbox"))
+	if langSwitch {
+		tgcomp.Link(p.Main, tr("🌐 English", "🌐 中文"), tr("?lang=en", "?lang=zh-TW"))
+	}
 	tgcomp.Markdown(p.Main, tr(`所有處理都在瀏覽器中完成，檔案不會離開你的電腦。
 
 請從側邊導覽選擇工具。
