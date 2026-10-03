@@ -10,8 +10,13 @@ import (
 )
 
 func main() {
-	// The app runs in a worker, which sees the browser's language but not the page URL.
-	i18n.Set(js.Global().Get("navigator").Get("language").String())
+	// ?lang= wins over the browser's language.
+	lang := tgwasm.Query().Get("lang")
+	if lang == "" {
+		lang = js.Global().Get("navigator").Get("language").String()
+	}
+	i18n.Set(lang)
+	langSwitch = true
 	app := newApp()
 	// Static hosts can't route paths, so pages live in the hash.
 	app.SetHashPageNameMode(true)

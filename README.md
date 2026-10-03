@@ -6,7 +6,8 @@
 [ToolGUI](https://github.com/voilelab/toolgui) 撰寫並編譯為 WebAssembly，
 完全在瀏覽器中執行，檔案不會離開你的電腦。
 
-介面語言依瀏覽器語言自動選擇：中文（`zh*`）或英文。
+介面語言依瀏覽器語言自動選擇：中文（`zh*`）或英文；可用首頁的連結或網址參數
+`?lang=en`、`?lang=zh-TW` 切換。
 
 **線上使用：<https://voilelab.github.io/epub_toolbox/>**
 
