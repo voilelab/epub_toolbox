@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/voilelab/epub_toolbox/internal/fetch"
+	"github.com/voilelab/epub_toolbox/internal/i18n"
 	"github.com/voilelab/toolgui/toolgui/tgcomp"
 	"github.com/voilelab/toolgui/toolgui/tgframe"
 )
@@ -68,20 +69,20 @@ func (m bookMeta) cover(ctx context.Context) ([]byte, error) {
 // metaForm draws the metadata inputs. resetKey resets them for a new input file.
 func metaForm(c *tgframe.Container, resetKey, defTitle, defIntro string) bookMeta {
 	m := bookMeta{
-		Title: tgcomp.Textbox(c, "書名", &tgcomp.TextboxConf{
+		Title: tgcomp.Textbox(c, tr("書名", "Title"), &tgcomp.TextboxConf{
 			Default: defTitle, ResetKey: resetKey,
 		}),
-		Author: tgcomp.Textbox(c, "作者"),
-		Intro: tgcomp.Textarea(c, "簡介", &tgcomp.TextareaConf{
+		Author: tgcomp.Textbox(c, tr("作者", "Author")),
+		Intro: tgcomp.Textarea(c, tr("簡介", "Introduction"), &tgcomp.TextareaConf{
 			Default: defIntro, ResetKey: resetKey, Height: 8,
 		}),
-		Language: tgcomp.Textbox(c, "語言", &tgcomp.TextboxConf{
-			Default: "zh-TW", Placeholder: "BCP 47 標籤，例如 zh-TW、en",
+		Language: tgcomp.Textbox(c, tr("語言", "Language"), &tgcomp.TextboxConf{
+			Default: i18n.Tag(), Placeholder: tr("BCP 47 標籤，例如 zh-TW、en", "BCP 47 tag, e.g. en, zh-TW"),
 		}),
 	}
-	m.coverFile = tgcomp.FileUpload(c, "封面", ".png,.jpg,.jpeg,.gif,.webp")
+	m.coverFile = tgcomp.FileUpload(c, tr("封面", "Cover"), ".png,.jpg,.jpeg,.gif,.webp")
 	if m.coverFile == nil {
-		m.coverURL = strings.TrimSpace(tgcomp.Textbox(c, "封面網址"))
+		m.coverURL = strings.TrimSpace(tgcomp.Textbox(c, tr("封面網址", "Cover URL")))
 	}
 
 	m.Title = strings.TrimSpace(m.Title)
@@ -95,7 +96,7 @@ func metaForm(c *tgframe.Container, resetKey, defTitle, defIntro string) bookMet
 func exportEpub(p *tgframe.Params, title string, build func() ([]byte, error)) {
 	tgcomp.Divider(p.Main)
 	filename := safeFilename(title) + ".epub"
-	tgcomp.DownloadFileFunc(p.Main, "下載 "+filename, build, &tgcomp.DownloadFileConf{
+	tgcomp.DownloadFileFunc(p.Main, tr("下載 ", "Download ")+filename, build, &tgcomp.DownloadFileConf{
 		Filename: filename,
 		MIME:     "application/epub+zip",
 	})

@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/voilelab/epub_toolbox/internal/epub"
+	"github.com/voilelab/epub_toolbox/internal/i18n"
 )
 
 // MaxImageSize caps one decompressed image, against zip bombs.
@@ -40,14 +41,14 @@ func Read(files []Image) ([]Image, error) {
 			continue
 		}
 		if len(f.Data) > MaxImageSize {
-			return nil, fmt.Errorf("%s：超過 %d MiB", f.Name, MaxImageSize>>20)
+			return nil, fmt.Errorf(i18n.T("%s：超過 %d MiB", "%s: exceeds %d MiB"), f.Name, MaxImageSize>>20)
 		}
 		if _, _, ok := epub.ImageType(f.Data); ok {
 			imgs = append(imgs, f)
 		}
 	}
 	if len(imgs) == 0 {
-		return nil, errors.New("找不到 PNG、JPEG、GIF 或 WebP 圖片")
+		return nil, errors.New(i18n.T("找不到 PNG、JPEG、GIF 或 WebP 圖片", "no PNG, JPEG, GIF or WebP images found"))
 	}
 
 	slices.SortStableFunc(imgs, func(a, b Image) int { return NaturalCompare(a.Name, b.Name) })
@@ -57,7 +58,7 @@ func Read(files []Image) ([]Image, error) {
 func readZip(data []byte) ([]Image, error) {
 	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
-		return nil, fmt.Errorf("讀取 zip：%w", err)
+		return nil, fmt.Errorf(i18n.T("讀取 zip：%w", "read zip: %w"), err)
 	}
 
 	var imgs []Image
@@ -66,7 +67,7 @@ func readZip(data []byte) ([]Image, error) {
 			continue
 		}
 		if f.UncompressedSize64 > MaxImageSize {
-			return nil, fmt.Errorf("%s：超過 %d MiB", f.Name, MaxImageSize>>20)
+			return nil, fmt.Errorf(i18n.T("%s：超過 %d MiB", "%s: exceeds %d MiB"), f.Name, MaxImageSize>>20)
 		}
 		b, err := readFile(f)
 		if err != nil {
@@ -145,14 +146,14 @@ func Build(meta Meta, imgs []Image) ([]byte, error) {
 		}
 	}
 	if meta.Intro != "" {
-		b.AddSection("簡介", epub.Paragraphs(strings.Split(meta.Intro, "\n")))
+		b.AddSection(i18n.T("簡介", "Introduction"), epub.Paragraphs(strings.Split(meta.Intro, "\n")))
 	}
 	for i, img := range imgs {
 		href, err := b.AddImage(img.Data)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", img.Name, err)
 		}
-		title := fmt.Sprintf("第 %d 頁", i+1)
+		title := fmt.Sprintf(i18n.T("第 %d 頁", "Page %d"), i+1)
 		b.AddSection(title, fmt.Sprintf(`<div class="page"><img src="%s" alt="%s"/></div>`, href, title))
 	}
 	return b.Bytes()

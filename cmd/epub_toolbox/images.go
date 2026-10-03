@@ -17,15 +17,15 @@ type pickedImages struct {
 }
 
 func ImagesPage(p *tgframe.Params) error {
-	tgcomp.Title(p.Main, "🖼️ 圖片轉 EPUB")
-	tgcomp.Text(p.Main, "將圖片打包成 EPUB，每頁一張圖。")
+	tgcomp.Title(p.Main, tr("🖼️ 圖片轉 EPUB", "🖼️ Images to EPUB"))
+	tgcomp.Text(p.Main, tr("將圖片打包成 EPUB，每頁一張圖。", "Pack images into an EPUB, one image per page."))
 
-	files := tgcomp.MultiFileUpload(p.Sidebar, "選擇圖片或 zip 檔",
+	files := tgcomp.MultiFileUpload(p.Sidebar, tr("選擇圖片或 zip 檔", "Choose images or zip files"),
 		".zip,application/zip,.png,.jpg,.jpeg,.gif,.webp")
-	tgcomp.Caption(p.Sidebar, "PNG、JPEG、GIF 或 WebP，或其 zip 壓縮檔；"+
-		"頁面依檔名排序（2 在 10 之前）。")
+	tgcomp.Caption(p.Sidebar, tr("PNG、JPEG、GIF 或 WebP，或其 zip 壓縮檔；頁面依檔名排序（2 在 10 之前）。",
+		"PNG, JPEG, GIF or WebP, or zip archives of them; pages are sorted by file name (2 before 10)."))
 	if files == nil {
-		tgcomp.MessageInfo(p.Main, "👈 請選擇圖片或圖片的 zip 壓縮檔。")
+		tgcomp.MessageInfo(p.Main, tr("👈 請選擇圖片或圖片的 zip 壓縮檔。", "👈 Choose images or a zip archive of images."))
 		return nil
 	}
 	picked := make([]imgbook.Image, len(files))
@@ -49,15 +49,15 @@ func ImagesPage(p *tgframe.Params) error {
 		return nil
 	}
 	imgs := z.imgs
-	tgcomp.Text(p.Sidebar, "圖片數："+strconv.Itoa(len(imgs)))
+	tgcomp.Text(p.Sidebar, tr("圖片數：", "Images: ")+strconv.Itoa(len(imgs)))
 
-	tabPreview, tabMeta := tgcomp.Tab2(p.Main, "圖片預覽", "書籍資訊")
+	tabPreview, tabMeta := tgcomp.Tab2(p.Main, tr("圖片預覽", "Preview"), tr("書籍資訊", "Book Info"))
 
 	names := make([]string, len(imgs))
 	for i, img := range imgs {
 		names[i] = fmt.Sprintf("%d. %s", i+1, img.Name)
 	}
-	if idx := tgcomp.Select(tabPreview, "檔名", names, (&tgcomp.SelectConf{
+	if idx := tgcomp.Select(tabPreview, tr("檔名", "File"), names, (&tgcomp.SelectConf{
 		Base: tgframe.Base{ID: "image_" + fileKey},
 	}).SetDefault(0)); idx != nil {
 		tgcomp.Image(tabPreview, imgs[*idx].Data, &tgcomp.ImageConf{Width: "360px"})
@@ -71,13 +71,13 @@ func ImagesPage(p *tgframe.Params) error {
 	meta := metaForm(tabMeta, fileKey, defTitle, "")
 	firstAsCover := false
 	if !meta.hasCover() {
-		firstAsCover = tgcomp.Checkbox(tabMeta, "以第一張圖片作為封面")
+		firstAsCover = tgcomp.Checkbox(tabMeta, tr("以第一張圖片作為封面", "Use the first image as the cover"))
 	}
 
 	exportEpub(p, meta.Title, func() ([]byte, error) {
 		cover, err := meta.cover(p.Context)
 		if err != nil {
-			return nil, fmt.Errorf("封面：%w", err)
+			return nil, fmt.Errorf(tr("封面：%w", "cover: %w"), err)
 		}
 		if firstAsCover {
 			cover = imgs[0].Data

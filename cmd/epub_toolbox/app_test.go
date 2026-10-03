@@ -4,40 +4,47 @@ import (
 	"testing"
 	"time"
 
+	"github.com/voilelab/epub_toolbox/internal/i18n"
 	"github.com/voilelab/toolgui/toolgui/tgframe"
 )
 
-// TestPagesRender draws every page once with an empty state.
+// TestPagesRender draws every page once per language with an empty state.
 func TestPagesRender(t *testing.T) {
-	for _, page := range []string{"index", "novel", "regex", "images"} {
-		t.Run(page, func(t *testing.T) {
-			packs := make(chan any, 256)
-			s, err := tgframe.NewSession(newApp(), page, tgframe.NewState(), func(pack any) error {
-				packs <- pack
-				return nil
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer s.Close()
+	defer i18n.Set("zh-TW")
+	for _, lang := range []string{"zh-TW", "en"} {
+		i18n.Set(lang)
+		for _, page := range []string{"index", "novel", "regex", "images"} {
+			t.Run(lang+"/"+page, func(t *testing.T) { testPageRender(t, page) })
+		}
+	}
+}
 
-			if err := s.HandleRawEvent([]byte("{}")); err != nil {
-				t.Fatal(err)
-			}
-			for {
-				select {
-				case pack := <-packs:
-					if r, ok := pack.(*tgframe.ResultPack); ok {
-						if !r.Success {
-							t.Fatalf("run failed: %s", r.Error)
-						}
-						return
-					}
-				case <-time.After(5 * time.Second):
-					t.Fatal("timeout")
+func testPageRender(t *testing.T, page string) {
+	packs := make(chan any, 256)
+	s, err := tgframe.NewSession(newApp(), page, tgframe.NewState(), func(pack any) error {
+		packs <- pack
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	if err := s.HandleRawEvent([]byte("{}")); err != nil {
+		t.Fatal(err)
+	}
+	for {
+		select {
+		case pack := <-packs:
+			if r, ok := pack.(*tgframe.ResultPack); ok {
+				if !r.Success {
+					t.Fatalf("run failed: %s", r.Error)
 				}
+				return
 			}
-		})
+		case <-time.After(5 * time.Second):
+			t.Fatal("timeout")
+		}
 	}
 }
 

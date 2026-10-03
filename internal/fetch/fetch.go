@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"runtime"
 	"time"
+
+	"github.com/voilelab/epub_toolbox/internal/i18n"
 )
 
 // MaxSize caps a downloaded image.
@@ -27,7 +29,8 @@ func Image(ctx context.Context, url string) ([]byte, error) {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		if runtime.GOOS == "js" && !errors.Is(err, context.DeadlineExceeded) {
-			return nil, fmt.Errorf("%w（該網站可能不允許跨來源讀取，請下載圖片後改用上傳）", err)
+			return nil, fmt.Errorf(i18n.T("%w（該網站可能不允許跨來源讀取，請下載圖片後改用上傳）",
+				"%w (the site may not allow cross-origin reads; download the image and upload it instead)"), err)
 		}
 		return nil, err
 	}
@@ -41,7 +44,7 @@ func Image(ctx context.Context, url string) ([]byte, error) {
 		return nil, err
 	}
 	if len(b) > MaxSize {
-		return nil, fmt.Errorf("圖片超過 %d MiB", MaxSize>>20)
+		return nil, fmt.Errorf(i18n.T("圖片超過 %d MiB", "image exceeds %d MiB"), MaxSize>>20)
 	}
 	return b, nil
 }
