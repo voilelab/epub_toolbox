@@ -17,7 +17,7 @@ func newApp() *tgframe.App {
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "index", Title: tr("EPUB 工具箱", "EPUB Toolbox"), Emoji: "🧰"}, HomePage)
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "novel", Title: tr("小說 TXT 轉 EPUB", "Novel TXT to EPUB"), Emoji: "📘"}, NovelPage)
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "regex", Title: tr("用正規表示式篩選章節標題", "Matching Chapter Titles with Regex"), Emoji: "📑"}, RegexPage)
-	app.AddPageByConfig(&tgframe.PageConfig{Name: "images", Title: tr("圖片轉 EPUB", "Images to EPUB"), Emoji: "🖼️"}, ImagesPage)
+	app.AddPageByConfig(&tgframe.PageConfig{Name: "images", Title: tr("圖片轉 EPUB（實驗性）", "Images to EPUB (Experimental)"), Emoji: "🖼️"}, ImagesPage)
 	return app
 }
 
@@ -39,9 +39,9 @@ func HomePage(p *tgframe.Params) error {
 3. 填寫書籍資訊。
 4. 按下 **下載** 製作並儲存 EPUB。
 
-### 🖼️ 圖片轉 EPUB
+### 🖼️ 圖片轉 EPUB（實驗性）
 
-將圖片打包成 EPUB，每頁一張圖。
+將圖片打包成 EPUB，每頁一張圖。此功能仍在實驗階段，輸出結果可能不穩定。
 
 1. 選擇圖片（PNG、JPEG、GIF 或 WebP）或其 zip 壓縮檔；頁面依檔名排序。
 2. 填寫書籍資訊。
@@ -61,9 +61,9 @@ Split a plain-text novel into chapters and make an EPUB.
 3. Fill in the book info.
 4. Press **Download** to build and save the EPUB.
 
-### 🖼️ Images to EPUB
+### 🖼️ Images to EPUB (Experimental)
 
-Pack images into an EPUB, one image per page.
+Pack images into an EPUB, one image per page. This feature is experimental; output may be unreliable.
 
 1. Choose images (PNG, JPEG, GIF or WebP) or zip archives of them; pages are sorted by file name.
 2. Fill in the book info.

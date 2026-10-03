@@ -17,7 +17,9 @@ type pickedImages struct {
 }
 
 func ImagesPage(p *tgframe.Params) error {
-	tgcomp.Title(p.Main, tr("🖼️ 圖片轉 EPUB", "🖼️ Images to EPUB"))
+	tgcomp.Title(p.Main, tr("🖼️ 圖片轉 EPUB（實驗性）", "🖼️ Images to EPUB (Experimental)"))
+	tgcomp.MessageWarning(p.Main, tr("🧪 此功能仍在實驗階段，輸出結果可能不穩定，請自行確認產生的 EPUB。",
+		"🧪 This feature is experimental. Output may be unreliable; check the generated EPUB yourself."))
 	tgcomp.Text(p.Main, tr("將圖片打包成 EPUB，每頁一張圖。", "Pack images into an EPUB, one image per page."))
 
 	files := tgcomp.MultiFileUpload(p.Sidebar, tr("選擇圖片或 zip 檔", "Choose images or zip files"),
