@@ -11,6 +11,8 @@ import (
 	"io"
 	"strings"
 	"time"
+
+	"github.com/voilelab/epub_toolbox/internal/i18n"
 )
 
 // ErrEmpty is returned when a book has nothing to put in its spine.
@@ -88,7 +90,7 @@ func (b *Book) Write(w io.Writer) error {
 
 	m := *b
 	if m.Title == "" {
-		m.Title = "未命名"
+		m.Title = i18n.T("未命名", "Untitled")
 	}
 	if m.Language == "" {
 		m.Language = "und"
@@ -135,7 +137,8 @@ func (b *Book) Write(w io.Writer) error {
 	if m.cover != nil {
 		files = append(files, struct{ name, data string }{
 			"EPUB/cover.xhtml",
-			m.page("封面", fmt.Sprintf(`<div class="cover"><img src="%s" alt="封面"/></div>`, m.cover.href)),
+			m.page(i18n.T("封面", "Cover"), fmt.Sprintf(`<div class="cover"><img src="%s" alt="%s"/></div>`,
+				m.cover.href, Escape(i18n.T("封面", "Cover")))),
 		})
 	}
 	for _, s := range m.sections {

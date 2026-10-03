@@ -6,6 +6,8 @@
 [ToolGUI](https://github.com/voilelab/toolgui) 撰寫並編譯為 WebAssembly，
 完全在瀏覽器中執行，檔案不會離開你的電腦。
 
+介面語言依瀏覽器語言自動選擇：中文（`zh*`）或英文。
+
 **線上使用：<https://voilelab.github.io/epub_toolbox/>**
 
 ## 使用方式
@@ -41,7 +43,7 @@ go tool toolgui-wasm serve ./cmd/epub_toolbox
 # 靜態網站輸出至 dist/
 go tool toolgui-wasm build -o dist ./cmd/epub_toolbox
 
-# 本機伺服器 http://127.0.0.1:3000
+# 本機伺服器 http://127.0.0.1:3000（英文介面加 -lang en）
 go run ./cmd/epub_toolbox
 ```
 

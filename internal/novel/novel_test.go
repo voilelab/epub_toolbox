@@ -60,7 +60,7 @@ func TestSplit(t *testing.T) {
 		got = append(got, c.Title+"|"+c.Content(0))
 	}
 	want := []string{
-		HeadTitle + "|序",
+		HeadTitle() + "|序",
 		"第一章 A|a1\n第二章 B（不是標題）",
 		"第2章 C|c1\nx第三章",
 	}
@@ -87,7 +87,7 @@ func TestRemoveEmpty(t *testing.T) {
 
 func TestBuild(t *testing.T) {
 	chs := []Chapter{
-		{Title: HeadTitle, Head: true, Lines: []string{"head"}},
+		{Title: HeadTitle(), Head: true, Lines: []string{"head"}},
 		{Title: "第一章", Lines: []string{"a"}},
 		{Title: "第二章", Lines: []string{"b"}},
 	}

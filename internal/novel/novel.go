@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/voilelab/epub_toolbox/internal/epub"
+	"github.com/voilelab/epub_toolbox/internal/i18n"
 )
 
 // Chapter is a title line and the lines below it.
@@ -15,8 +16,10 @@ type Chapter struct {
 	Head  bool // content before the first title
 }
 
-// HeadTitle is the title of the head chapter.
-const HeadTitle = "開頭（第一個標題前的內容）"
+// HeadTitle returns the title of the head chapter.
+func HeadTitle() string {
+	return i18n.T("開頭（第一個標題前的內容）", "Opening (before the first title)")
+}
 
 // Content joins the first limit lines, or all lines if limit <= 0.
 func (c Chapter) Content(limit int) string {
@@ -54,7 +57,7 @@ func NewMatcher(allow, block []string) (*Matcher, error) {
 	for _, a := range allow {
 		re, err := regexp.Compile("^(?:" + a + ")")
 		if err != nil {
-			return nil, fmt.Errorf("無效的正規表示式 %q：%w", a, err)
+			return nil, fmt.Errorf(i18n.T("無效的正規表示式 %q：%w", "invalid regex %q: %w"), a, err)
 		}
 		m.allow = append(m.allow, re)
 	}
@@ -78,7 +81,7 @@ func (m *Matcher) IsTitle(line string) bool {
 
 // Split splits lines into chapters. The first chapter is always the head.
 func Split(lines []string, m *Matcher) []Chapter {
-	chs := []Chapter{{Title: HeadTitle, Head: true}}
+	chs := []Chapter{{Title: HeadTitle(), Head: true}}
 	for _, l := range lines {
 		if m.IsTitle(l) {
 			chs = append(chs, Chapter{Title: l})
@@ -122,7 +125,7 @@ func Build(meta Meta, chs []Chapter) ([]byte, error) {
 		}
 	}
 	if meta.Intro != "" {
-		b.AddSection("簡介", epub.Paragraphs(strings.Split(meta.Intro, "\n")))
+		b.AddSection(i18n.T("簡介", "Introduction"), epub.Paragraphs(strings.Split(meta.Intro, "\n")))
 	}
 	for _, c := range chs {
 		if c.Head {
