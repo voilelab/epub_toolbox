@@ -170,3 +170,38 @@ func TestBuildEmpty(t *testing.T) {
 		t.Error("want error")
 	}
 }
+
+func TestDecodeUTF32(t *testing.T) {
+	for _, tt := range []struct {
+		name, data string
+	}{
+		{"UTF-32BE", "\x00\x00\x00a\x00\x00\x00b"},
+		{"utf-32le", "a\x00\x00\x00b\x00\x00\x00"},
+	} {
+		if got := Decode([]byte(tt.data), tt.name); got != "ab" {
+			t.Errorf("Decode(%s) = %q", tt.name, got)
+		}
+		if canonical(tt.name) == "" {
+			t.Errorf("canonical(%s) unknown", tt.name)
+		}
+	}
+}
+
+func TestDecodeUnknown(t *testing.T) {
+	if got := Decode([]byte("ab\xff"), "no-such"); got != "ab�" {
+		t.Errorf("Decode = %q", got)
+	}
+	if canonical("no-such") != "" {
+		t.Error("canonical of an unknown name")
+	}
+}
+
+func TestContent(t *testing.T) {
+	c := Chapter{Lines: []string{"a", "b", "c"}}
+	if got := c.Content(2); got != "a\nb" {
+		t.Errorf("Content(2) = %q", got)
+	}
+	if got := c.Content(0); got != "a\nb\nc" {
+		t.Errorf("Content(0) = %q", got)
+	}
+}

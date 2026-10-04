@@ -52,6 +52,13 @@ scripts/patch-favicon.sh dist  # 換掉 toolgui 內建的 favicon
 go run ./cmd/epub_toolbox
 ```
 
+測試與覆蓋率：
+
+```bash
+go test -coverprofile=cover.out ./...
+go tool cover -func=cover.out   # 或 -html=cover.out
+```
+
 推送到 `main` 會部署至 GitHub Pages（需在 repo 設定中將 Pages 來源設為 GitHub
 Actions）。
 
