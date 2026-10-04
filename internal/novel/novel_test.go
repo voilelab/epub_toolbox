@@ -3,6 +3,7 @@ package novel
 import (
 	"archive/zip"
 	"bytes"
+	"io"
 	"slices"
 	"strings"
 	"testing"
@@ -108,5 +109,34 @@ func TestBuild(t *testing.T) {
 	// intro + 2 chapters, head skipped
 	if secs != 3 {
 		t.Errorf("sections = %d, want 3", secs)
+	}
+}
+
+func TestBuildStyle(t *testing.T) {
+	chs := []Chapter{{Title: "第一章", Lines: []string{"a"}}}
+	for _, s := range Styles {
+		data, err := Build(Meta{Title: "書", Style: s}, chs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		files := map[string]string{}
+		for _, f := range zr.File {
+			rc, _ := f.Open()
+			b, _ := io.ReadAll(rc)
+			rc.Close()
+			files[f.Name] = string(b)
+		}
+		if files["EPUB/style.css"] != s.CSS() {
+			t.Errorf("%s: style.css not from style", s.Name())
+		}
+		vertical := strings.Contains(files["EPUB/style.css"], "writing-mode: vertical-rl")
+		rtl := strings.Contains(files["EPUB/content.opf"], `page-progression-direction="rtl"`)
+		if want := s == StyleVertical; vertical != want || rtl != want {
+			t.Errorf("%s: vertical css = %v, rtl spine = %v, want %v", s.Name(), vertical, rtl, want)
+		}
 	}
 }

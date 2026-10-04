@@ -135,3 +135,22 @@ func TestImageType(t *testing.T) {
 		t.Errorf("SetCover err = %v", err)
 	}
 }
+
+func TestWritingMode(t *testing.T) {
+	for mode, rtl := range map[string]bool{"": false, "vertical-rl": true, "horizontal-lr": false} {
+		b := &Book{WritingMode: mode}
+		b.AddSection("a", "<p>a</p>")
+		data, err := b.Bytes()
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, files := readZip(t, data)
+		opf := files["EPUB/content.opf"]
+		if got := strings.Contains(opf, `<spine toc="ncx" page-progression-direction="rtl">`); got != rtl {
+			t.Errorf("%q: rtl spine = %v, want %v", mode, got, rtl)
+		}
+		if got := strings.Contains(opf, `name="primary-writing-mode"`); got != (mode != "") {
+			t.Errorf("%q: primary-writing-mode meta = %v", mode, got)
+		}
+	}
+}

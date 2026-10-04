@@ -108,6 +108,7 @@ func RemoveEmpty(chs []Chapter) []Chapter {
 type Meta struct {
 	Title, Author, Intro, Language string
 	Cover                          []byte
+	Style                          Style
 }
 
 // Build builds an EPUB from the non-head chapters.
@@ -117,7 +118,8 @@ func Build(meta Meta, chs []Chapter) ([]byte, error) {
 		Author:      meta.Author,
 		Description: meta.Intro,
 		Language:    meta.Language,
-		CSS:         css,
+		CSS:         meta.Style.CSS(),
+		WritingMode: meta.Style.WritingMode(),
 	}
 	if len(meta.Cover) > 0 {
 		if err := b.SetCover(meta.Cover); err != nil {
@@ -135,7 +137,3 @@ func Build(meta Meta, chs []Chapter) ([]byte, error) {
 	}
 	return b.Bytes()
 }
-
-const css = `.cover { text-align: center; }
-.cover img { max-width: 100%; max-height: 100vh; }
-`

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/voilelab/epub_toolbox/internal/i18n"
 	"github.com/voilelab/epub_toolbox/internal/novel"
 	"github.com/voilelab/toolgui/toolgui/tgcomp"
 	"github.com/voilelab/toolgui/toolgui/tgframe"
@@ -49,7 +50,7 @@ func NovelPage(p *tgframe.Params) error {
 		return novel.Lines(text, removeEmptyLines)
 	})
 
-	tabChapters, tabMeta := tgcomp.Tab2(p.Main, tr("章節", "Chapters"), tr("書籍資訊", "Book Info"))
+	tabChapters, tabMeta, tabStyle := tgcomp.Tab3(p.Main, tr("章節", "Chapters"), tr("書籍資訊", "Book Info"), tr("樣式", "Style"))
 
 	chapters, ok := chaptersTab(p, tabChapters, lines, hashOf(fileKey, enc, removeEmptyLines))
 	if !ok {
@@ -64,6 +65,7 @@ func NovelPage(p *tgframe.Params) error {
 	defTitle := strings.TrimSuffix(file.Name, ".txt")
 	defIntro := strings.TrimSpace(chapters.head.Content(longChapter))
 	meta := metaForm(tabMeta, fileKey, defTitle, defIntro)
+	style := styleForm(tabStyle)
 
 	exportEpub(p, meta.Title, func() ([]byte, error) {
 		cover, err := meta.cover(p.Context)
@@ -72,10 +74,31 @@ func NovelPage(p *tgframe.Params) error {
 		}
 		return novel.Build(novel.Meta{
 			Title: meta.Title, Author: meta.Author, Intro: meta.Intro,
-			Language: meta.Language, Cover: cover,
+			Language: meta.Language, Cover: cover, Style: style,
 		}, chapters.all)
 	})
 	return nil
+}
+
+func styleForm(c *tgframe.Container) novel.Style {
+	names := make([]string, len(novel.Styles))
+	for i, s := range novel.Styles {
+		names[i] = s.Name()
+	}
+	def := novel.StyleHorizontal
+	if i18n.EN() {
+		def = novel.StyleReader
+	}
+	idx := tgcomp.Select(c, tr("排版模板", "Layout template"), names, (&tgcomp.SelectConf{}).SetDefault(slices.Index(novel.Styles, def)))
+	if idx == nil {
+		return novel.StyleReader
+	}
+	s := novel.Styles[*idx]
+	tgcomp.Caption(c, s.Desc())
+	tgcomp.Caption(c, tr("字體、字級與顏色交給閱讀器設定。", "Font, size and colors are left to the reader app."))
+	exp := tgcomp.Expand(c, "CSS", false)
+	tgcomp.Code(exp, s.CSS(), &tgcomp.CodeConf{Language: "css"})
+	return s
 }
 
 type chapterSet struct {
