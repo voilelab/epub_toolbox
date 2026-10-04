@@ -41,10 +41,10 @@
 
 ```bash
 # 瀏覽器（WebAssembly）
-go tool toolgui-wasm serve ./cmd/epub_toolbox
+go tool toolgui-wasm serve -manifest cmd/epub_toolbox/web/manifest.json -assets cmd/epub_toolbox/web/assets ./cmd/epub_toolbox
 
 # 靜態網站輸出至 dist/
-go tool toolgui-wasm build -o dist ./cmd/epub_toolbox
+go tool toolgui-wasm build -manifest cmd/epub_toolbox/web/manifest.json -assets cmd/epub_toolbox/web/assets -o dist ./cmd/epub_toolbox
 
 # 本機伺服器 http://127.0.0.1:3000（英文介面加 -lang en）
 go run ./cmd/epub_toolbox
@@ -59,5 +59,6 @@ Actions）。
 - `internal/novel`：編碼偵測、章節切分
 - `internal/imgbook`：圖片與 zip 讀取、圖片書
 - `internal/fetch`：封面下載
+- `cmd/epub_toolbox/web`：Web app manifest 與圖示，瀏覽器版與本機伺服器共用
 - `cmd/epub_toolbox`：ToolGUI 介面；`main_wasm.go` 供瀏覽器使用，
   `main_server.go` 用於原生執行檔

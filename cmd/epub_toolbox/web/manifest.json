@@ -1,0 +1,15 @@
+{
+  "name": "EPUB 工具箱",
+  "short_name": "EPUB 工具箱",
+  "description": "將純文字小說或圖片製作成 EPUB 電子書，完全在瀏覽器中執行。",
+  "lang": "zh-TW",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "theme_color": "#2f6f8f",
+  "background_color": "#ffffff",
+  "icons": [
+    {"src": "assets/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable"},
+    {"src": "assets/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable"}
+  ]
+}
