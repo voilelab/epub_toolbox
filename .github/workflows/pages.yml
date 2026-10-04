@@ -25,7 +25,8 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      - run: go tool toolgui-wasm build -o dist ./cmd/epub_toolbox
+      - run: go tool toolgui-wasm build -manifest cmd/epub_toolbox/web/manifest.json -assets cmd/epub_toolbox/web/assets -o dist ./cmd/epub_toolbox
+      - run: scripts/patch-favicon.sh dist
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
