@@ -1,37 +1,62 @@
 package novel
 
-import "github.com/voilelab/epub_toolbox/internal/i18n"
+import (
+	"strings"
 
-// Style is a layout template for the book body.
-type Style int
-
-const (
-	StyleReader     Style = iota // leave layout to the reader app
-	StyleHorizontal              // Chinese, horizontal
-	StyleVertical                // Chinese, vertical right to left
+	"github.com/voilelab/epub_toolbox/internal/i18n"
 )
 
-// Styles lists every Style in UI order.
-var Styles = []Style{StyleReader, StyleHorizontal, StyleVertical}
+// Style is the body layout. The zero value leaves layout to the reader app.
+// Font, size and colors are never set so reader settings and night mode still work.
+type Style struct {
+	Indent      bool // two-character first-line indent
+	NoGap       bool // no space between paragraphs
+	Justify     bool
+	CenterTitle bool
+	Vertical    bool // vertical right to left, pages turn left
+}
+
+// Template is a preset Style.
+type Template int
+
+const (
+	TemplateReader Template = iota
+	TemplateHorizontal
+	TemplateVertical
+)
+
+// Templates lists every Template in UI order.
+var Templates = []Template{TemplateReader, TemplateHorizontal, TemplateVertical}
+
+// Style is the preset.
+func (t Template) Style() Style {
+	switch t {
+	case TemplateHorizontal:
+		return Style{Indent: true, NoGap: true, CenterTitle: true}
+	case TemplateVertical:
+		return Style{Indent: true, NoGap: true, Vertical: true}
+	}
+	return Style{}
+}
 
 // Name is the UI label.
-func (s Style) Name() string {
-	switch s {
-	case StyleHorizontal:
+func (t Template) Name() string {
+	switch t {
+	case TemplateHorizontal:
 		return i18n.T("中文橫排", "Chinese, horizontal")
-	case StyleVertical:
+	case TemplateVertical:
 		return i18n.T("中文直排", "Chinese, vertical")
 	}
 	return i18n.T("閱讀器預設", "Reader default")
 }
 
-// Desc describes the style for the UI.
-func (s Style) Desc() string {
-	switch s {
-	case StyleHorizontal:
+// Desc describes the template for the UI.
+func (t Template) Desc() string {
+	switch t {
+	case TemplateHorizontal:
 		return i18n.T("段落首行縮排兩字、無段距，章節標題置中。",
 			"Two-character first-line indent, no paragraph gap, centered chapter titles.")
-	case StyleVertical:
+	case TemplateVertical:
 		return i18n.T("由上而下、由右而左直排，向左翻頁；段落首行縮排兩字。閱讀器需支援直排。",
 			"Top to bottom, right to left, pages turn left; two-character indent. The reader app must support vertical text.")
 	}
@@ -40,28 +65,52 @@ func (s Style) Desc() string {
 
 // WritingMode is the epub.Book WritingMode for s.
 func (s Style) WritingMode() string {
-	if s == StyleVertical {
+	if s.Vertical {
 		return "vertical-rl"
 	}
 	return ""
 }
 
 // CSS is the stylesheet for s.
-// Font, size and colors are left to the reader so its settings and night mode still work.
 func (s Style) CSS() string {
-	switch s {
-	case StyleHorizontal:
-		return baseCSS + `p { text-indent: 2em; margin: 0; }
-h1 { text-align: center; margin: 1em 0 2em; }
-`
-	case StyleVertical:
+	var sb strings.Builder
+	sb.WriteString(baseCSS)
+	if s.Vertical {
 		// Apple Books only honors writing-mode on <html>.
-		return baseCSS + `html { -epub-writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; writing-mode: vertical-rl; }
-p { text-indent: 2em; margin: 0; }
-h1 { margin: 0 1em 0 2em; }
-`
+		sb.WriteString("html { -epub-writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; writing-mode: vertical-rl; }\n")
 	}
-	return baseCSS
+
+	var p []string
+	if s.Indent {
+		p = append(p, "text-indent: 2em;")
+	}
+	if s.NoGap {
+		p = append(p, "margin: 0;")
+	}
+	if s.Justify {
+		p = append(p, "text-align: justify;")
+	}
+	rule(&sb, "p", p)
+
+	var h1 []string
+	if s.CenterTitle {
+		h1 = append(h1, "text-align: center;")
+	}
+	switch {
+	case s.Vertical:
+		// Right is before the title in vertical-rl.
+		h1 = append(h1, "margin: 0 1em 0 2em;")
+	case s.CenterTitle:
+		h1 = append(h1, "margin: 1em 0 2em;")
+	}
+	rule(&sb, "h1", h1)
+	return sb.String()
+}
+
+func rule(sb *strings.Builder, sel string, decls []string) {
+	if len(decls) > 0 {
+		sb.WriteString(sel + " { " + strings.Join(decls, " ") + " }\n")
+	}
 }
 
 const baseCSS = `.cover { text-align: center; }

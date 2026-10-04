@@ -114,7 +114,8 @@ func TestBuild(t *testing.T) {
 
 func TestBuildStyle(t *testing.T) {
 	chs := []Chapter{{Title: "第一章", Lines: []string{"a"}}}
-	for _, s := range Styles {
+	for _, tp := range Templates {
+		s := tp.Style()
 		data, err := Build(Meta{Title: "書", Style: s}, chs)
 		if err != nil {
 			t.Fatal(err)
@@ -131,12 +132,12 @@ func TestBuildStyle(t *testing.T) {
 			files[f.Name] = string(b)
 		}
 		if files["EPUB/style.css"] != s.CSS() {
-			t.Errorf("%s: style.css not from style", s.Name())
+			t.Errorf("%s: style.css not from style", tp.Name())
 		}
 		vertical := strings.Contains(files["EPUB/style.css"], "writing-mode: vertical-rl")
 		rtl := strings.Contains(files["EPUB/content.opf"], `page-progression-direction="rtl"`)
-		if want := s == StyleVertical; vertical != want || rtl != want {
-			t.Errorf("%s: vertical css = %v, rtl spine = %v, want %v", s.Name(), vertical, rtl, want)
+		if want := tp == TemplateVertical; vertical != want || rtl != want {
+			t.Errorf("%s: vertical css = %v, rtl spine = %v, want %v", tp.Name(), vertical, rtl, want)
 		}
 	}
 }
