@@ -83,11 +83,17 @@ func metaForm(c *tgframe.Container, resetKey, defTitle, defIntro string) bookMet
 	return m
 }
 
+// track reports an analytics event; a no-op unless main sets it.
+var track = func(event string, data map[string]any) {}
+
 // exportEpub draws the download button; build runs only on click.
-func exportEpub(p *tgframe.Params, title string, build func() ([]byte, error)) {
+func exportEpub(p *tgframe.Params, tool, title string, build func() ([]byte, error)) {
 	tgcomp.Divider(p.Main)
 	filename := safeFilename(title) + ".epub"
-	tgcomp.DownloadFileFunc(p.Main, tr("下載 ", "Download ")+filename, build, &tgcomp.DownloadFileConf{
+	tgcomp.DownloadFileFunc(p.Main, tr("下載 ", "Download ")+filename, func() ([]byte, error) {
+		track("download", map[string]any{"tool": tool})
+		return build()
+	}, &tgcomp.DownloadFileConf{
 		Filename: filename,
 		MIME:     "application/epub+zip",
 	})

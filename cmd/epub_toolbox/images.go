@@ -77,7 +77,7 @@ func ImagesPage(p *tgframe.Params) error {
 		firstAsCover = tgcomp.Checkbox(tabMeta, tr("以第一張圖片作為封面", "Use the first image as the cover"))
 	}
 
-	exportEpub(p, meta.Title, func() ([]byte, error) {
+	exportEpub(p, "images", meta.Title, func() ([]byte, error) {
 		cover, err := meta.cover()
 		if err != nil {
 			return nil, fmt.Errorf(tr("封面：%w", "cover: %w"), err)

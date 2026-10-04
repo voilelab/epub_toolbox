@@ -1,0 +1,9 @@
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+<script defer src="https://cloud.umami.is/script.js" data-website-id="ed4ee3b2-afb5-464f-9f77-511696483cfd" data-domains="voilelab.github.io"></script>
+<script>
+  // Pages switch by hash, which Umami doesn't track; wait for the new title.
+  addEventListener('hashchange', () => setTimeout(() =>
+    window.umami?.track((p) => ({ ...p, url: location.pathname + location.search + location.hash, title: document.title })), 500))
+  // Events from the Go worker (main_wasm.go).
+  new BroadcastChannel('analytics').onmessage = (e) => window.umami?.track(e.data.event, e.data.data)
+</script>

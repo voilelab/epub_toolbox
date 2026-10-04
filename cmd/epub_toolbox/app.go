@@ -14,6 +14,7 @@ var langSwitch bool
 func newApp() *tgframe.App {
 	app := tgframe.NewApp()
 	app.SetTitle(tr("EPUB 工具箱", "EPUB Toolbox"))
+	app.SetIcon("assets/favicon.ico")
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "index", Title: tr("EPUB 工具箱", "EPUB Toolbox"), Emoji: "🧰"}, HomePage)
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "novel", Title: tr("小說 TXT 轉 EPUB", "Novel TXT to EPUB"), Emoji: "📘"}, NovelPage)
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "regex", Title: tr("用正規表示式篩選章節標題", "Matching Chapter Titles with Regex"), Emoji: "📑"}, RegexPage)
@@ -26,7 +27,7 @@ func HomePage(p *tgframe.Params) error {
 	if langSwitch {
 		tgcomp.Link(p.Main, tr("🌐 English", "🌐 中文"), tr("?lang=en", "?lang=zh-TW"))
 	}
-	tgcomp.Markdown(p.Main, tr(`所有處理都在瀏覽器中完成，檔案不會離開你的電腦。
+	tgcomp.Markdown(p.Main, tr(`所有處理都在瀏覽器中完成，檔案不會離開你的電腦。線上版以 Umami 統計匿名的瀏覽與下載次數，不使用 cookie。
 
 請從側邊導覽選擇工具。
 
@@ -48,7 +49,7 @@ func HomePage(p *tgframe.Params) error {
 3. 按下 **下載** 製作並儲存 EPUB。
 
 原始碼：[voilelab/epub_toolbox](https://github.com/voilelab/epub_toolbox)，以 [ToolGUI](https://github.com/voilelab/toolgui) 製作。`,
-		`Everything runs in your browser; your files never leave your computer.
+		`Everything runs in your browser; your files never leave your computer. The online version counts anonymous visits and downloads with Umami, without cookies.
 
 Pick a tool from the side navigation.
 
