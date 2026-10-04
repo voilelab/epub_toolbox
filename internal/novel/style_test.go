@@ -3,6 +3,8 @@ package novel
 import (
 	"strings"
 	"testing"
+
+	"github.com/voilelab/epub_toolbox/internal/i18n"
 )
 
 func TestStyleCSS(t *testing.T) {
@@ -57,5 +59,20 @@ func TestStyleExtra(t *testing.T) {
 	s.Extra = " \n "
 	if got := s.CSS(); got != base {
 		t.Errorf("blank Extra changed CSS:\n%s", got)
+	}
+}
+
+func TestTemplateLabels(t *testing.T) {
+	defer i18n.Set("zh-TW")
+	for _, lang := range []string{"zh-TW", "en"} {
+		i18n.Set(lang)
+		names, descs := map[string]bool{}, map[string]bool{}
+		for _, tp := range Templates {
+			names[tp.Name()] = true
+			descs[tp.Desc()] = true
+		}
+		if len(names) != len(Templates) || len(descs) != len(Templates) {
+			t.Errorf("%s: labels not distinct: %v %v", lang, names, descs)
+		}
 	}
 }
