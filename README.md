@@ -6,6 +6,8 @@
 [ToolGUI](https://github.com/voilelab/toolgui) 撰寫並編譯為 WebAssembly，
 完全在瀏覽器中執行，檔案不會離開你的電腦。
 
+線上版以 [Umami](https://umami.is/) 統計匿名的瀏覽與下載次數，不使用 cookie，也不會傳送檔案內容。
+
 介面語言依瀏覽器語言自動選擇：中文（`zh*`）或英文；可用首頁的連結或網址參數
 `?lang=en`、`?lang=zh-TW` 切換。
 
@@ -42,11 +44,10 @@
 
 ```bash
 # 瀏覽器（WebAssembly）
-go tool toolgui-wasm serve -manifest cmd/epub_toolbox/web/manifest.json -assets cmd/epub_toolbox/web/assets ./cmd/epub_toolbox
+go tool toolgui-wasm serve -manifest cmd/epub_toolbox/web/manifest.json -assets cmd/epub_toolbox/web/assets -icon assets/favicon.ico -head cmd/epub_toolbox/web/head.html ./cmd/epub_toolbox
 
 # 靜態網站輸出至 dist/
-go tool toolgui-wasm build -manifest cmd/epub_toolbox/web/manifest.json -assets cmd/epub_toolbox/web/assets -o dist ./cmd/epub_toolbox
-scripts/patch-favicon.sh dist  # 換掉 toolgui 內建的 favicon
+go tool toolgui-wasm build -manifest cmd/epub_toolbox/web/manifest.json -assets cmd/epub_toolbox/web/assets -icon assets/favicon.ico -head cmd/epub_toolbox/web/head.html -o dist ./cmd/epub_toolbox
 
 # 本機伺服器 http://127.0.0.1:3000（英文介面加 -lang en）
 go run ./cmd/epub_toolbox
