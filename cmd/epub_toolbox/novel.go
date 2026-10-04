@@ -75,6 +75,7 @@ func NovelPage(p *tgframe.Params) error {
 		return novel.Build(novel.Meta{
 			Title: meta.Title, Author: meta.Author, Intro: meta.Intro,
 			Language: meta.Language, Cover: cover, Style: style,
+			KeepHead: chapters.keepHead,
 		}, chapters.all)
 	})
 	return nil
@@ -134,6 +135,8 @@ func styleForm(c *tgframe.Container) novel.Style {
 type chapterSet struct {
 	all  []novel.Chapter
 	head novel.Chapter // before RemoveEmpty, for the default intro
+
+	keepHead bool
 }
 
 func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesKey string) (chapterSet, bool) {
@@ -160,6 +163,20 @@ func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesK
 
 	if tgcomp.Checkbox(c, tr("移除空章節", "Remove empty chapters")) {
 		set.all = novel.RemoveEmpty(chs)
+	}
+
+	// The default intro holds only longChapter lines of the head, so keep a longer head by default.
+	longHead := len(set.head.Lines) > longChapter
+	set.keepHead = tgcomp.Checkbox(c, tr("將開頭放入書中", "Include the opening in the book"), &tgcomp.CheckboxConf{
+		Base: tgframe.Base{ID: "keep_head_" + splitKey}, Default: longHead,
+	})
+	if !set.keepHead {
+		tgcomp.Caption(c, tr("開頭只會作為預設簡介。", "The opening is used only as the default introduction."))
+		if longHead {
+			tgcomp.MessageWarning(c, fmt.Sprintf(tr("開頭有 %d 行，預設簡介只取前 %d 行，其餘不會出現在書中。",
+				"The opening has %d lines; the default introduction takes only the first %d, the rest is left out of the book."),
+				len(set.head.Lines), longChapter))
+		}
 	}
 
 	rows := make([][]string, len(set.all))

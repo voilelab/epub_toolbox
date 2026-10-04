@@ -141,3 +141,32 @@ func TestBuildStyle(t *testing.T) {
 		}
 	}
 }
+
+func TestEncodingsNoAliases(t *testing.T) {
+	gbk, _ := simplifiedchinese.GB18030.NewEncoder().String(strings.Repeat("第一章 开始\n从前从前，有一座山。\n", 20))
+	encs := Encodings([]byte(gbk))
+	if slices.Contains(encs, "GB-18030") && slices.Contains(encs, "GB18030") {
+		t.Errorf("Encodings = %v, has both GB-18030 and GB18030", encs)
+	}
+}
+
+func TestBuildKeepHead(t *testing.T) {
+	chs := []Chapter{
+		{Title: HeadTitle(), Head: true, Lines: []string{"head"}},
+		{Title: "第一章", Lines: []string{"a"}},
+	}
+	data, err := Build(Meta{Title: "書", KeepHead: true}, chs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(data, []byte("sec_00002.xhtml")) {
+		t.Error("head not included")
+	}
+}
+
+func TestBuildEmpty(t *testing.T) {
+	_, err := Build(Meta{Title: "書"}, []Chapter{{Title: HeadTitle(), Head: true, Lines: []string{"x"}}})
+	if err == nil {
+		t.Error("want error")
+	}
+}
