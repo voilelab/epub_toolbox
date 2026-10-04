@@ -14,6 +14,7 @@ var langSwitch bool
 func newApp() *tgframe.App {
 	app := tgframe.NewApp()
 	app.SetTitle(tr("EPUB 工具箱", "EPUB Toolbox"))
+	app.SetIcon("assets/favicon.ico")
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "index", Title: tr("EPUB 工具箱", "EPUB Toolbox"), Emoji: "🧰"}, HomePage)
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "novel", Title: tr("小說 TXT 轉 EPUB", "Novel TXT to EPUB"), Emoji: "📘"}, NovelPage)
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "regex", Title: tr("用正規表示式篩選章節標題", "Matching Chapter Titles with Regex"), Emoji: "📑"}, RegexPage)
