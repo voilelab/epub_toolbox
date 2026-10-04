@@ -45,6 +45,7 @@ go tool toolgui-wasm serve -manifest cmd/epub_toolbox/web/manifest.json -assets 
 
 # 靜態網站輸出至 dist/
 go tool toolgui-wasm build -manifest cmd/epub_toolbox/web/manifest.json -assets cmd/epub_toolbox/web/assets -o dist ./cmd/epub_toolbox
+scripts/patch-favicon.sh dist  # 換掉 toolgui 內建的 favicon
 
 # 本機伺服器 http://127.0.0.1:3000（英文介面加 -lang en）
 go run ./cmd/epub_toolbox
