@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/voilelab/epub_toolbox/internal/i18n"
 )
 
 var pngData = []byte("\x89PNG\r\n\x1a\n rest")
@@ -152,5 +154,30 @@ func TestWritingMode(t *testing.T) {
 		if got := strings.Contains(opf, `name="primary-writing-mode"`); got != (mode != "") {
 			t.Errorf("%q: primary-writing-mode meta = %v", mode, got)
 		}
+	}
+}
+
+func TestErrorsTranslate(t *testing.T) {
+	defer i18n.Set("zh-TW")
+	i18n.Set("en")
+	if got := ErrEmpty.Error(); got != "epub: book has no content" {
+		t.Errorf("en ErrEmpty = %q", got)
+	}
+	i18n.Set("zh-TW")
+	if got := ErrImageType.Error(); !strings.Contains(got, "不支援") {
+		t.Errorf("zh ErrImageType = %q", got)
+	}
+}
+
+func TestCoverOnlyNav(t *testing.T) {
+	b := &Book{}
+	if err := b.SetCover([]byte("\x89PNG\r\n\x1a\n")); err != nil {
+		t.Fatal(err)
+	}
+	if nav := b.nav(); !strings.Contains(nav, ">封面</a>") {
+		t.Errorf("nav = %s", nav)
+	}
+	if ncx := b.ncx(); !strings.Contains(ncx, "<text>封面</text>") {
+		t.Errorf("ncx = %s", ncx)
 	}
 }

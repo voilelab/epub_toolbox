@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path"
 	"strconv"
-	"strings"
 
 	"github.com/voilelab/epub_toolbox/internal/imgbook"
 	"github.com/voilelab/toolgui/toolgui/tgcomp"
@@ -67,8 +66,10 @@ func ImagesPage(p *tgframe.Params) error {
 
 	// A lone zip names the book.
 	defTitle := ""
-	if len(files) == 1 && strings.HasSuffix(files[0].Name, ".zip") {
-		defTitle = strings.TrimSuffix(path.Base(files[0].Name), ".zip")
+	if len(files) == 1 {
+		if name, ok := cutExt(path.Base(files[0].Name), ".zip"); ok {
+			defTitle = name
+		}
 	}
 	meta := metaForm(tabMeta, fileKey, defTitle, "")
 	firstAsCover := false
