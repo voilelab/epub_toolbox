@@ -7,13 +7,14 @@ import (
 )
 
 // Style is the body layout. The zero value leaves layout to the reader app.
-// Font, size and colors are never set so reader settings and night mode still work.
+// The options never set font, size or colors so reader settings and night mode still work.
 type Style struct {
 	Indent      bool // two-character first-line indent
 	NoGap       bool // no space between paragraphs
 	Justify     bool
 	CenterTitle bool
-	Vertical    bool // vertical right to left, pages turn left
+	Vertical    bool   // vertical right to left, pages turn left
+	Extra       string // custom CSS appended last, so it wins
 }
 
 // Template is a preset Style.
@@ -104,6 +105,10 @@ func (s Style) CSS() string {
 		h1 = append(h1, "margin: 1em 0 2em;")
 	}
 	rule(&sb, "h1", h1)
+
+	if extra := strings.TrimSpace(s.Extra); extra != "" {
+		sb.WriteString(extra + "\n")
+	}
 	return sb.String()
 }
 

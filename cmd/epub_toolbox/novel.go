@@ -116,6 +116,14 @@ func styleForm(c *tgframe.Container) novel.Style {
 		tgcomp.Caption(desc, fmt.Sprintf(tr("已自訂（以「%s」為基礎）。", "Customized (based on %s)."), t.Name()))
 	}
 	tgcomp.Caption(c, tr("字體、字級與顏色交給閱讀器設定。", "Font, size and colors are left to the reader app."))
+
+	adv := tgcomp.Expand(c, tr("進階：自訂 CSS", "Advanced: custom CSS"), false)
+	s.Extra = tgcomp.Textarea(adv, tr("自訂 CSS", "Custom CSS"), &tgcomp.TextareaConf{
+		Height: 6,
+	})
+	tgcomp.Caption(adv, tr("例如 p { line-height: 1.8; }。加在產生的 CSS 之後，可覆寫上面的設定。寫死字級或顏色可能讓閱讀器設定或夜間模式失效。",
+		"E.g. p { line-height: 1.8; }. Appended after the generated CSS, so it overrides the options above. Fixed sizes or colors may break reader settings or night mode."))
+
 	exp := tgcomp.Expand(c, "CSS", false)
 	tgcomp.Code(exp, s.CSS(), &tgcomp.CodeConf{Language: "css"})
 	return s

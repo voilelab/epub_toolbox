@@ -46,3 +46,16 @@ h1 { margin: 0 1em 0 2em; }
 		}
 	}
 }
+
+func TestStyleExtra(t *testing.T) {
+	s := TemplateHorizontal.Style()
+	base := s.CSS()
+	s.Extra = "  p { line-height: 1.8; }\n\n"
+	if got, want := s.CSS(), base+"p { line-height: 1.8; }\n"; got != want {
+		t.Errorf("CSS =\n%s\nwant\n%s", got, want)
+	}
+	s.Extra = " \n "
+	if got := s.CSS(); got != base {
+		t.Errorf("blank Extra changed CSS:\n%s", got)
+	}
+}
