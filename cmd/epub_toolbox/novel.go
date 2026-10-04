@@ -62,7 +62,7 @@ func NovelPage(p *tgframe.Params) error {
 	tgcomp.Text(p.Sidebar, tr("字數：", "Characters: ")+strconv.Itoa(utf8.RuneCountInString(text)))
 	tgcomp.Text(p.Sidebar, tr("章節數：", "Chapters: ")+strconv.Itoa(len(chapters.all)))
 
-	defTitle := strings.TrimSuffix(file.Name, ".txt")
+	defTitle, _ := cutExt(file.Name, ".txt")
 	defIntro := strings.TrimSpace(chapters.head.Content(longChapter))
 	meta := metaForm(tabMeta, fileKey, defTitle, defIntro)
 	style := styleForm(tabStyle)

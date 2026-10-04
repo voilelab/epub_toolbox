@@ -5,7 +5,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"crypto/rand"
-	"errors"
 	"fmt"
 	"html"
 	"io"
@@ -16,10 +15,15 @@ import (
 )
 
 // ErrEmpty is returned when a book has nothing to put in its spine.
-var ErrEmpty = errors.New("epub: book has no content")
+var ErrEmpty error = &localError{"epub：書中沒有任何內容", "epub: book has no content"}
 
 // ErrImageType is returned for image data that is not PNG, JPEG, GIF or WebP.
-var ErrImageType = errors.New("epub: unsupported image type")
+var ErrImageType error = &localError{"epub：不支援的圖片格式", "epub: unsupported image type"}
+
+// localError translates its message when read, as the language is set after init.
+type localError struct{ zh, en string }
+
+func (e *localError) Error() string { return i18n.T(e.zh, e.en) }
 
 // Book is an EPUB book being assembled. Zero values are usable.
 type Book struct {
@@ -234,7 +238,7 @@ func (b *Book) nav() string {
 	}
 	// An empty <ol> is invalid, so point at the cover instead.
 	if len(b.sections) == 0 {
-		li.WriteString("      <li><a href=\"cover.xhtml\">Cover</a></li>\n")
+		li.WriteString("      <li><a href=\"cover.xhtml\">" + Escape(i18n.T("封面", "Cover")) + "</a></li>\n")
 	}
 	return fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
@@ -258,7 +262,7 @@ func (b *Book) ncx() string {
 			i+1, i+1, Escape(s.title), s.href)
 	}
 	if len(b.sections) == 0 {
-		pts.WriteString("    <navPoint id=\"np1\" playOrder=\"1\"><navLabel><text>Cover</text></navLabel><content src=\"cover.xhtml\"/></navPoint>\n")
+		pts.WriteString("    <navPoint id=\"np1\" playOrder=\"1\"><navLabel><text>" + Escape(i18n.T("封面", "Cover")) + "</text></navLabel><content src=\"cover.xhtml\"/></navPoint>\n")
 	}
 	return fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">

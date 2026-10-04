@@ -55,3 +55,21 @@ func TestSafeFilename(t *testing.T) {
 		}
 	}
 }
+
+func TestCutExt(t *testing.T) {
+	tests := []struct {
+		name, ext, want string
+		ok              bool
+	}{
+		{"book.txt", ".txt", "book", true},
+		{"BOOK.TXT", ".txt", "BOOK", true},
+		{"pics.Zip", ".zip", "pics", true},
+		{"book", ".txt", "book", false},
+		{"xt", ".txt", "xt", false},
+	}
+	for _, tt := range tests {
+		if got, ok := cutExt(tt.name, tt.ext); got != tt.want || ok != tt.ok {
+			t.Errorf("cutExt(%q, %q) = %q, %v", tt.name, tt.ext, got, ok)
+		}
+	}
+}

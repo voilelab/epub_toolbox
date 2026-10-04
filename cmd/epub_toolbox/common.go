@@ -106,3 +106,11 @@ func safeFilename(s string) string {
 	}
 	return s
 }
+
+// cutExt removes ext from name, ignoring case, and reports whether it was there.
+func cutExt(name, ext string) (string, bool) {
+	if len(name) >= len(ext) && strings.EqualFold(name[len(name)-len(ext):], ext) {
+		return name[:len(name)-len(ext)], true
+	}
+	return name, false
+}
