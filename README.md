@@ -35,8 +35,6 @@
 2. 填寫書籍資訊。
 3. 按下 `下載` 製作並儲存 EPUB。
 
-封面網址僅在該網站允許跨來源讀取時可用；否則請先下載圖片再上傳。
-
 ## 執行
 
 需要 Go 1.27.1 以上（或設定 `GOTOOLCHAIN=auto`）。
@@ -61,7 +59,6 @@ Actions）。
 - `internal/epub`：EPUB 3 寫入器，僅使用標準函式庫
 - `internal/novel`：編碼偵測、章節切分
 - `internal/imgbook`：圖片與 zip 讀取、圖片書
-- `internal/fetch`：封面下載
 - `cmd/epub_toolbox/web`：Web app manifest 與圖示，瀏覽器版與本機伺服器共用
 - `cmd/epub_toolbox`：ToolGUI 介面；`main_wasm.go` 供瀏覽器使用，
   `main_server.go` 用於原生執行檔

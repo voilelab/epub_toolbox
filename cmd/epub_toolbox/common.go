@@ -1,13 +1,11 @@
 package main
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"strings"
 
-	"github.com/voilelab/epub_toolbox/internal/fetch"
 	"github.com/voilelab/epub_toolbox/internal/i18n"
 	"github.com/voilelab/toolgui/toolgui/tgcomp"
 	"github.com/voilelab/toolgui/toolgui/tgframe"
@@ -48,22 +46,18 @@ type bookMeta struct {
 	Title, Author, Intro, Language string
 
 	coverFile *tgcomp.FileObject
-	coverURL  string
 }
 
 func (m bookMeta) hasCover() bool {
-	return m.coverFile != nil || m.coverURL != ""
+	return m.coverFile != nil
 }
 
-// cover reads the uploaded cover or downloads it from the URL.
-func (m bookMeta) cover(ctx context.Context) ([]byte, error) {
-	if m.coverFile != nil {
-		return m.coverFile.Bytes()
+// cover reads the uploaded cover, or returns nil if none.
+func (m bookMeta) cover() ([]byte, error) {
+	if m.coverFile == nil {
+		return nil, nil
 	}
-	if m.coverURL != "" {
-		return fetch.Image(ctx, m.coverURL)
-	}
-	return nil, nil
+	return m.coverFile.Bytes()
 }
 
 // metaForm draws the metadata inputs. resetKey resets them for a new input file.
@@ -81,9 +75,6 @@ func metaForm(c *tgframe.Container, resetKey, defTitle, defIntro string) bookMet
 		}),
 	}
 	m.coverFile = tgcomp.FileUpload(c, tr("封面", "Cover"), ".png,.jpg,.jpeg,.gif,.webp")
-	if m.coverFile == nil {
-		m.coverURL = strings.TrimSpace(tgcomp.Textbox(c, tr("封面網址", "Cover URL")))
-	}
 
 	m.Title = strings.TrimSpace(m.Title)
 	m.Author = strings.TrimSpace(m.Author)

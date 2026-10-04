@@ -68,7 +68,7 @@ func NovelPage(p *tgframe.Params) error {
 	style := styleForm(tabStyle)
 
 	exportEpub(p, meta.Title, func() ([]byte, error) {
-		cover, err := meta.cover(p.Context)
+		cover, err := meta.cover()
 		if err != nil {
 			return nil, fmt.Errorf(tr("封面：%w", "cover: %w"), err)
 		}
