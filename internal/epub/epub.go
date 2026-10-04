@@ -30,6 +30,7 @@ type Book struct {
 	ID          string    // random urn:uuid if empty
 	Modified    time.Time // now if zero
 	CSS         string    // shared by every page
+	WritingMode string    // e.g. "vertical-rl"; a "-rl" mode pages right to left
 
 	cover    *resource
 	images   []resource
@@ -190,6 +191,14 @@ func (b *Book) opf() string {
 		items.WriteString("    <item id=\"cover\" href=\"cover.xhtml\" media-type=\"application/xhtml+xml\"/>\n")
 		spine.WriteString("    <itemref idref=\"cover\"/>\n")
 	}
+	if b.WritingMode != "" {
+		// For Kindle; the CSS sets the actual writing mode.
+		fmt.Fprintf(&meta, "    <meta name=\"primary-writing-mode\" content=\"%s\"/>\n", Escape(b.WritingMode))
+	}
+	spineAttr := ""
+	if strings.HasSuffix(b.WritingMode, "-rl") {
+		spineAttr = ` page-progression-direction="rtl"`
+	}
 	for i, r := range b.images {
 		fmt.Fprintf(&items, "    <item id=\"img%d\" href=\"%s\" media-type=\"%s\"/>\n", i+1, r.href, r.mime)
 	}
@@ -211,11 +220,11 @@ func (b *Book) opf() string {
     <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
     <item id="css" href="style.css" media-type="text/css"/>
 %[6]s  </manifest>
-  <spine toc="ncx">
+  <spine toc="ncx"%[8]s>
 %[7]s  </spine>
 </package>
 `, Escape(b.Language), Escape(b.ID), Escape(b.Title), meta.String(),
-		b.Modified.UTC().Format("2006-01-02T15:04:05Z"), items.String(), spine.String())
+		b.Modified.UTC().Format("2006-01-02T15:04:05Z"), items.String(), spine.String(), spineAttr)
 }
 
 func (b *Book) nav() string {
