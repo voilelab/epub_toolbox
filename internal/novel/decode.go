@@ -19,11 +19,11 @@ var fallbacks = []string{"UTF-8", "Big5", "GB18030", "UTF-16LE"}
 
 // Encodings returns candidate encodings of b, the most likely first.
 func Encodings(b []byte) []string {
-	var out []string
+	var out, seen []string
 	add := func(name string) {
-		if lookup(name) != nil && !slices.ContainsFunc(out, func(s string) bool {
-			return strings.EqualFold(s, name)
-		}) {
+		key := canonical(name)
+		if key != "" && !slices.Contains(seen, key) {
+			seen = append(seen, key)
 			out = append(out, name)
 		}
 	}
@@ -37,6 +37,19 @@ func Encodings(b []byte) []string {
 		add(name)
 	}
 	return out
+}
+
+// canonical names the encoding name refers to, so aliases such as
+// "GB-18030" and "GB18030" match; "" if unknown.
+func canonical(name string) string {
+	enc := lookup(name)
+	if enc == nil {
+		return ""
+	}
+	if n, err := htmlindex.Name(enc); err == nil {
+		return n
+	}
+	return strings.ToUpper(name)
 }
 
 func lookup(name string) encoding.Encoding {

@@ -1,6 +1,7 @@
 package novel
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -109,9 +110,10 @@ type Meta struct {
 	Title, Author, Intro, Language string
 	Cover                          []byte
 	Style                          Style
+	KeepHead                       bool // include the head chapter
 }
 
-// Build builds an EPUB from the non-head chapters.
+// Build builds an EPUB from the chapters, skipping the head unless meta.KeepHead.
 func Build(meta Meta, chs []Chapter) ([]byte, error) {
 	b := &epub.Book{
 		Title:       meta.Title,
@@ -130,10 +132,18 @@ func Build(meta Meta, chs []Chapter) ([]byte, error) {
 		b.AddSection(i18n.T("簡介", "Introduction"), epub.Paragraphs(strings.Split(meta.Intro, "\n")))
 	}
 	for _, c := range chs {
+		title := c.Title
 		if c.Head {
-			continue
+			if !meta.KeepHead {
+				continue
+			}
+			title = i18n.T("開頭", "Opening")
 		}
-		b.AddSection(c.Title, "<h1>"+epub.Escape(c.Title)+"</h1>\n"+epub.Paragraphs(c.Lines))
+		b.AddSection(title, "<h1>"+epub.Escape(title)+"</h1>\n"+epub.Paragraphs(c.Lines))
 	}
-	return b.Bytes()
+	data, err := b.Bytes()
+	if errors.Is(err, epub.ErrEmpty) {
+		return nil, errors.New(i18n.T("書中沒有任何內容：請確認章節標題或簡介", "the book has no content: check the chapter titles or the introduction"))
+	}
+	return data, err
 }
