@@ -81,20 +81,35 @@ func NovelPage(p *tgframe.Params) error {
 }
 
 func styleForm(c *tgframe.Container) novel.Style {
-	names := make([]string, len(novel.Styles))
-	for i, s := range novel.Styles {
-		names[i] = s.Name()
+	names := make([]string, len(novel.Templates))
+	for i, t := range novel.Templates {
+		names[i] = t.Name()
 	}
-	def := novel.StyleHorizontal
+	def := novel.TemplateHorizontal
 	if i18n.EN() {
-		def = novel.StyleReader
+		def = novel.TemplateReader
 	}
-	idx := tgcomp.Select(c, tr("排版模板", "Layout template"), names, (&tgcomp.SelectConf{}).SetDefault(slices.Index(novel.Styles, def)))
+	idx := tgcomp.Select(c, tr("排版模板", "Layout template"), names, (&tgcomp.SelectConf{}).SetDefault(slices.Index(novel.Templates, def)))
 	if idx == nil {
-		return novel.StyleReader
+		return novel.Style{}
 	}
-	s := novel.Styles[*idx]
-	tgcomp.Caption(c, s.Desc())
+	t := novel.Templates[*idx]
+	tgcomp.Caption(c, t.Desc())
+
+	// IDs carry the template so switching it resets the options.
+	d := t.Style()
+	box := func(id, label string, v bool) bool {
+		return tgcomp.Checkbox(c, label, &tgcomp.CheckboxConf{
+			Base: tgframe.Base{ID: "style_" + id + "_" + strconv.Itoa(*idx)}, Default: v,
+		})
+	}
+	s := novel.Style{
+		Indent:      box("indent", tr("首行縮排兩字", "Two-character first-line indent"), d.Indent),
+		NoGap:       box("nogap", tr("取消段距", "No paragraph gap"), d.NoGap),
+		Justify:     box("justify", tr("左右對齊", "Justify"), d.Justify),
+		CenterTitle: box("center", tr("章節標題置中", "Center chapter titles"), d.CenterTitle),
+		Vertical:    box("vertical", tr("直排（向左翻頁）", "Vertical (pages turn left)"), d.Vertical),
+	}
 	tgcomp.Caption(c, tr("字體、字級與顏色交給閱讀器設定。", "Font, size and colors are left to the reader app."))
 	exp := tgcomp.Expand(c, "CSS", false)
 	tgcomp.Code(exp, s.CSS(), &tgcomp.CodeConf{Language: "css"})
