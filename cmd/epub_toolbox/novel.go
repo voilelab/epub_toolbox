@@ -208,7 +208,9 @@ func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesK
 		if len(ch.Lines) > previewLines {
 			tgcomp.Caption(exp, fmt.Sprintf(tr("顯示前 %d 行，共 %d 行。", "Showing the first %d of %d lines."), previewLines, len(ch.Lines)))
 		}
-		tgcomp.Code(exp, ch.Content(previewLines), &tgcomp.CodeConf{Language: "text"})
+		tgcomp.Code(exp, ch.Content(previewLines), &tgcomp.CodeConf{
+			Base: tgframe.Base{ID: "chapter_preview"}, Language: "text", // wrapped by web/assets/style.css
+		})
 	}
 	return set, true
 }

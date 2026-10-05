@@ -35,7 +35,7 @@ func main() {
 	}
 }
 
-// setWebConfig serves web/manifest.json and web/assets.
+// setWebConfig serves web/manifest.json and web/assets, and links the stylesheet.
 func setWebConfig(e *tgexec.WebExecutor) error {
 	bs, err := web.ReadFile("web/manifest.json")
 	if err != nil {
@@ -52,5 +52,7 @@ func setWebConfig(e *tgexec.WebExecutor) error {
 		return err
 	}
 	e.SetAssets(assets)
+	// Analytics in head.html are for the deployed wasm build only.
+	e.SetHeadHTML(`<link rel="stylesheet" href="assets/style.css" />`)
 	return nil
 }
