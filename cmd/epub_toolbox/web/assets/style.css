@@ -1,0 +1,6 @@
+/* Wrap long lines in the chapter preview; the highlighter sets white-space inline. */
+#code_component_chapter_preview,
+#code_component_chapter_preview code {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere;
+}
