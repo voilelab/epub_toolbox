@@ -236,6 +236,7 @@ func suggestions(c *tgframe.Container, sugs []novel.Suggestion, detected bool) {
 	} else {
 		tgcomp.Caption(c, tr("無法確定本書的標題格式，使用預設值。", "Could not tell this book's title format; using the default."))
 	}
+	sugs = slices.DeleteFunc(slices.Clone(sugs), func(s novel.Suggestion) bool { return s.Score < suggestScore })
 	if len(sugs) == 0 {
 		return
 	}

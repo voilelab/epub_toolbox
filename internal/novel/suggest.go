@@ -18,10 +18,10 @@ type Suggestion struct {
 }
 
 const (
-	// numClass matches Arabic, full-width and Chinese numerals.
-	numClass = `[0-9０-９零〇一二三四五六七八九十百千萬万兩两]+`
+	// cnNumerals orders the Chinese numerals in a number class.
+	cnNumerals = "零〇一二兩两三四五六七八九十百千萬万"
 	// spaceClass matches leading indentation, incl. the ideographic space.
-	spaceClass = `[ \t　]*`
+	spaceClass = `[ \t\x{3000}]*`
 
 	maxTitleLen  = 40 // runes; longer lines are not shape candidates
 	maxPrefixLen = 8  // runes before the number
@@ -39,19 +39,31 @@ var specials = []string{"序章", "序幕", "楔子", "引子", "前言", "尾�
 // Suggest infers title patterns from the book's lines, best first.
 // Pass lines with blank ones kept: blank neighbors are a signal.
 func Suggest(lines []string) []Suggestion {
-	shapes := map[string]int{}
+	type stat struct {
+		n    int
+		nums string // numeral runes seen
+	}
+	shapes := map[string]*stat{}
 	for _, l := range lines {
-		if k, ok := shapeOf(l); ok {
-			shapes[k]++
+		k, nums, ok := shapeOf(l)
+		if !ok {
+			continue
 		}
+		st := shapes[k]
+		if st == nil {
+			st = &stat{}
+			shapes[k] = st
+		}
+		st.n++
+		st.nums += nums
 	}
 
 	var out []Suggestion
-	for k, n := range shapes {
-		if n < minCount {
+	for k, st := range shapes {
+		if st.n < minCount {
 			continue
 		}
-		if s, ok := score(lines, k); ok {
+		if s, ok := score(lines, k, numClass(st.nums)); ok {
 			out = append(out, s)
 		}
 	}
@@ -88,60 +100,80 @@ func parseKey(k string) shape {
 	return shape{p, r}
 }
 
-// shapeOf returns the shape key of a title-like line.
-func shapeOf(line string) (string, bool) {
+// shapeOf returns the shape key of a title-like line and its numeral runes.
+func shapeOf(line string) (key, nums string, ok bool) {
 	t := trimSpace(line)
 	if t == "" || utf8.RuneCountInString(t) > maxTitleLen {
-		return "", false
+		return "", "", false
 	}
 	rs := []rune(t)
 	i := 0
 	for i < len(rs) && !isNum(rs[i]) {
 		if isEndPunct(rs[i]) {
-			return "", false
+			return "", "", false
 		}
 		i++
 	}
 	if i == len(rs) || i > maxPrefixLen {
-		return "", false
+		return "", "", false
 	}
 	prefix := string(rs[:i])
+	start := i
 	for i < len(rs) && isNum(rs[i]) {
 		i++
 	}
+	nums = string(rs[start:i])
 	s := shape{prefix: prefix}
 	if i < len(rs) && strings.ContainsRune(titleMarks, rs[i]) {
 		s.mark = rs[i]
 	}
 	// A bare number must stand alone, or "一個人…" would be a title.
 	if prefix == "" && s.mark == 0 && i < len(rs) && !isSpace(rs[i]) {
-		return "", false
+		return "", "", false
 	}
-	return s.key(), true
+	return s.key(), nums, true
+}
+
+// numClass returns a regex matching numbers made of the runes in nums.
+// The whole book is scanned, so listing only seen numerals loses no title.
+func numClass(nums string) string {
+	var sb strings.Builder
+	if strings.ContainsFunc(nums, func(r rune) bool { return r >= '0' && r <= '9' }) {
+		sb.WriteString("0-9")
+	}
+	if strings.ContainsFunc(nums, func(r rune) bool { return r >= '０' && r <= '９' }) {
+		sb.WriteString("０-９")
+	}
+	for _, r := range cnNumerals {
+		if strings.ContainsRune(nums, r) {
+			sb.WriteRune(r)
+		}
+	}
+	return "[" + sb.String() + "]+"
 }
 
 // pattern returns the allowlist regex of a shape.
-func (s shape) pattern() string {
+func (s shape) pattern(num string) string {
 	var sb strings.Builder
 	sb.WriteString(spaceClass)
 	for _, f := range strings.Fields(s.prefix) {
 		sb.WriteString(regexp.QuoteMeta(f))
-		sb.WriteString(`[ 　]*`)
+		sb.WriteString(`[ \x{3000}]*`)
 	}
-	sb.WriteString(numClass)
+	sb.WriteString(num)
 	switch {
 	case s.mark != 0:
 		sb.WriteString(regexp.QuoteMeta(string(s.mark)))
 	case s.prefix == "":
-		sb.WriteString(`(?:[ \t　]|$)`)
+		sb.WriteString(`(?:[ \t\x{3000}]|$)`)
 	}
 	return sb.String()
 }
 
 // score runs the shape's pattern over lines and rates the split.
-func score(lines []string, k string) (Suggestion, bool) {
+func score(lines []string, k, num string) (Suggestion, bool) {
 	sh := parseKey(k)
-	main := sh.pattern()
+	main := sh.pattern(num)
 	re := regexp.MustCompile("^(?:" + main + ")")
 
 	var idx []int
@@ -171,6 +203,10 @@ func score(lines []string, k string) (Suggestion, bool) {
 	}
 	n := float64(len(idx))
 	short, clean, isolated = short/n, clean/n, isolated/n
+	// Titles rarely end like sentences; such matches are prose.
+	if clean < 0.5 {
+		return Suggestion{}, false
+	}
 
 	// Blank lines only count if the book is not blank-separated throughout.
 	if r := blankRate(lines); r > 0.3 {

@@ -53,8 +53,9 @@ func TestSuggest(t *testing.T) {
 		{
 			name:  "chinese chapters",
 			lines: book(12, true, func(i int) string { return "第" + cnNums[i-1] + "章 風起" }),
-			yes:   []string{"第十二章 風起", "　　第3章", "第１２章"},
-			no:    []string{"第三天他終於讀完那一章", "他說第一章很好看"},
+			yes:   []string{"第十二章 風起", "　　第三章"},
+			// Only numerals seen in the book are listed.
+			no: []string{"第三天他終於讀完那一章", "他說第一章很好看", "第3章"},
 		},
 		{
 			name: "prologue and prose",
@@ -119,6 +120,29 @@ func TestSuggestRejects(t *testing.T) {
 	}
 	if got := Suggest([]string{"第一章", "a", "第二章", "b"}); len(got) != 0 {
 		t.Errorf("too few titles: %+v", got)
+	}
+}
+
+func TestSuggestProse(t *testing.T) {
+	// Numbered sentences restart in every chapter, like titles of volumes.
+	lines := book(12, true, func(i int) string { return "第" + cnNums[i-1] + "章" })
+	for _, s := range Suggest(lines) {
+		if strings.Contains(s.Pattern, "他走了") {
+			t.Errorf("prose suggested: %+v", s)
+		}
+	}
+}
+
+func TestNumClass(t *testing.T) {
+	tests := map[string]string{
+		"12":    "[0-9]+",
+		"１二十":   "[０-９二十]+",
+		"三一十百3": "[0-9一三十百]+",
+	}
+	for in, want := range tests {
+		if got := numClass(in); got != want {
+			t.Errorf("numClass(%q) = %s, want %s", in, got, want)
+		}
 	}
 }
 
