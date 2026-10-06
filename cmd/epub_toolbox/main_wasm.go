@@ -17,10 +17,9 @@ func main() {
 	}
 	i18n.Set(lang)
 	langSwitch = true
-	// Go runs in a worker; web/head.html relays to Umami on the page.
-	analytics := js.Global().Get("BroadcastChannel").New("analytics")
+	// Dispatched as toolgui:<event> on this tab; web/head.html relays to Umami.
 	track = func(event string, data map[string]any) {
-		analytics.Call("postMessage", map[string]any{"event": event, "data": data})
+		_ = tgwasm.Emit(event, data)
 	}
 	app := newApp()
 	// Static hosts can't route paths, so pages live in the hash.
