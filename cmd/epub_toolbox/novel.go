@@ -231,8 +231,8 @@ func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesK
 // suggestions reports the detected title patterns.
 func suggestions(c *tgframe.Container, sugs []novel.Suggestion, detected bool) {
 	if detected {
-		tgcomp.Caption(c, fmt.Sprintf(tr("已依本書內容自動偵測標題格式（信心 %.0f%%）。",
-			"Title format detected from this book (confidence %.0f%%)."), sugs[0].Score*100))
+		tgcomp.Caption(c, fmt.Sprintf(tr("🧪 已依本書內容自動偵測標題格式（信心 %.0f%%，實驗性功能，請確認章節切分）。",
+			"🧪 Title format detected from this book (confidence %.0f%%; experimental, check the chapters)."), sugs[0].Score*100))
 	} else {
 		tgcomp.Caption(c, tr("無法確定本書的標題格式，使用預設值。", "Could not tell this book's title format; using the default."))
 	}
@@ -240,7 +240,7 @@ func suggestions(c *tgframe.Container, sugs []novel.Suggestion, detected bool) {
 	if len(sugs) == 0 {
 		return
 	}
-	exp := tgcomp.Expand(c, tr("偵測到的標題格式", "Detected title formats"), false)
+	exp := tgcomp.Expand(c, tr("偵測到的標題格式（實驗性）", "Detected title formats (Experimental)"), false)
 	rows := make([][]string, len(sugs))
 	for i, s := range sugs {
 		rows[i] = []string{fmt.Sprintf("%.0f%%", s.Score*100), strconv.Itoa(s.Count), s.Pattern, strings.Join(s.Samples, " / ")}
