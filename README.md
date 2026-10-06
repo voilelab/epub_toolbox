@@ -63,8 +63,8 @@ go tool cover -func=cover.out   # 或 -html=cover.out
 只有 `release/*` 分支會部署至 GitHub Pages（需在 repo 設定中將 Pages 來源設為
 GitHub Actions，並在 `github-pages` environment 允許 `release/*` 部署）。
 
-發版：在 Actions 執行 **Release** workflow（從 `main`），會將 `main` fast-forward
-到指定的 release 分支（預設 `release/1.0`）並觸發部署。
+發版：在 Actions 執行 **Release** workflow（從 `main`），輸入版本（如 `v1.2.3`）。
+會將 `main` fast-forward 到 `release/1.x`、建立 tag 與 GitHub Release，並觸發部署。
 
 ## 專案結構
 
