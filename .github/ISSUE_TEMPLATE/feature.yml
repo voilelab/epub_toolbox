@@ -1,0 +1,22 @@
+name: 💡 功能建議 / Feature request
+description: 想要新功能或改進 / Suggest a new feature or improvement
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: tool
+    attributes:
+      label: 工具 / Tool
+      options:
+        - 小說 TXT 轉 EPUB / Novel TXT to EPUB
+        - 圖片轉 EPUB / Images to EPUB
+        - 新工具 / New tool
+        - 其他 / Other
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: 想要什麼？ / What would you like?
+      description: 想解決什麼問題，以及你希望它怎麼運作。 / The problem to solve and how you'd like it to work.
+    validations:
+      required: true

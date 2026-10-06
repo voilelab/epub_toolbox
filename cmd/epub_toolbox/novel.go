@@ -153,7 +153,7 @@ func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesK
 
 	m, err := novel.NewMatcher(allow, block)
 	if err != nil {
-		tgcomp.MessageDanger(c, err.Error())
+		showError(c, toolNovel, err)
 		return chapterSet{}, false
 	}
 
