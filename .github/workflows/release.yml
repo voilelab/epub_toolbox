@@ -1,13 +1,12 @@
 name: Release
 
-# 將 main 快轉到 release 分支並部署 GitHub Pages
+# 將 main 快轉到 release/<major>.x，打 tag 並部署 GitHub Pages
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        description: Release branch
+      version:
+        description: Version (e.g. v1.2.3)
         required: true
-        default: release/1.0
 
 permissions:
   contents: write
@@ -22,18 +21,26 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
-      BRANCH: ${{ inputs.branch }}
+      VERSION: ${{ inputs.version }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Validate branch name
+      - name: Resolve release branch
         run: |
-          [[ "$BRANCH" =~ ^release/[0-9A-Za-z._-]+$ ]] || { echo "invalid branch: $BRANCH"; exit 1; }
+          [[ "$VERSION" =~ ^v([0-9]+)\.[0-9]+\.[0-9]+$ ]] || { echo "invalid version: $VERSION"; exit 1; }
+          echo "BRANCH=release/${BASH_REMATCH[1]}.x" >> "$GITHUB_ENV"
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - name: Check tag not exists
+        run: |
+          ! git rev-parse -q --verify "refs/tags/$VERSION" || { echo "tag exists: $VERSION"; exit 1; }
       # 只允許 fast-forward，release 分支有 main 沒有的 commit 時會失敗
-      - name: Push main to release branch
-        run: git push origin "HEAD:refs/heads/$BRANCH"
+      - name: Push main to release branch and tag
+        run: |
+          git tag "$VERSION"
+          git push --atomic origin "HEAD:refs/heads/$BRANCH" "refs/tags/$VERSION"
+      - name: Create GitHub Release
+        run: gh release create "$VERSION" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes
       # GITHUB_TOKEN 的 push 不會觸發 workflow，需手動 dispatch
       - name: Trigger Pages deploy
         run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
