@@ -46,7 +46,7 @@ func ImagesPage(p *tgframe.Params) error {
 		return pickedImages{imgs, err}
 	})
 	if z.err != nil {
-		tgcomp.MessageDanger(p.Main, z.err.Error())
+		showError(p.Main, toolImages, z.err)
 		return nil
 	}
 	imgs := z.imgs

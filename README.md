@@ -13,6 +13,8 @@
 
 **線上使用：<https://voilelab.github.io/epub_toolbox/>**
 
+遇到問題或有建議，歡迎[回報問題](https://github.com/voilelab/epub_toolbox/issues/new?template=bug.yml)或[建議功能](https://github.com/voilelab/epub_toolbox/issues/new?template=feature.yml)。
+
 ## 使用方式
 
 ### 📘 小說 TXT 轉 EPUB

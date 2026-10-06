@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 🧰 線上使用 / Use online
+    url: https://voilelab.github.io/epub_toolbox/
+    about: EPUB 工具箱線上版 / The online EPUB Toolbox
