@@ -5,6 +5,6 @@
   // Pages switch by hash, which Umami doesn't track; wait for the new title.
   addEventListener('hashchange', () => setTimeout(() =>
     window.umami?.track((p) => ({ ...p, url: location.pathname + location.search + location.hash, title: document.title })), 500))
-  // Events from the Go worker (main_wasm.go).
-  new BroadcastChannel('analytics').onmessage = (e) => window.umami?.track(e.data.event, e.data.data)
+  // Events from the Go program (main_wasm.go).
+  addEventListener('toolgui:download', (e) => window.umami?.track('download', e.detail))
 </script>
