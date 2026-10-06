@@ -15,6 +15,16 @@ func newApp() *tgframe.App {
 	app := tgframe.NewApp()
 	app.SetTitle(tr("EPUB 工具箱", "EPUB Toolbox"))
 	app.SetIcon("assets/favicon.ico")
+	app.SetAbout(tr(`### 🧰 EPUB 工具箱
+
+將小說 TXT 或圖片製作成 EPUB。所有處理都在瀏覽器中完成，檔案不會離開你的電腦。
+
+原始碼：[voilelab/epub_toolbox](https://github.com/voilelab/epub_toolbox)`,
+		`### 🧰 EPUB Toolbox
+
+Make EPUBs from novel TXT files or images. Everything runs in your browser; your files never leave your computer.
+
+Source: [voilelab/epub_toolbox](https://github.com/voilelab/epub_toolbox)`))
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "index", Title: tr("EPUB 工具箱", "EPUB Toolbox"), Emoji: "🧰"}, HomePage)
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "novel", Title: tr("小說 TXT 轉 EPUB", "Novel TXT to EPUB"), Emoji: "📘"}, NovelPage)
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "regex", Title: tr("用正規表示式篩選章節標題", "Matching Chapter Titles with Regex"), Emoji: "📑"}, RegexPage)
