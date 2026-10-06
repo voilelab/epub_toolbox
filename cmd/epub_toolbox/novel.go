@@ -18,6 +18,8 @@ const (
 	longChapter = 500
 	// Lines shown in the chapter preview.
 	previewLines = 1000
+	// Detected patterns at or above this score replace the default allowlist.
+	suggestScore = 0.5
 )
 
 func NovelPage(p *tgframe.Params) error {
@@ -50,9 +52,14 @@ func NovelPage(p *tgframe.Params) error {
 		return novel.Lines(text, removeEmptyLines)
 	})
 
+	// Detection reads blank lines, so it ignores removeEmptyLines.
+	sugs := memo(p.State, "suggest", fileKey+enc, func() []novel.Suggestion {
+		return novel.Suggest(novel.Lines(text, false))
+	})
+
 	tabChapters, tabMeta, tabStyle := tgcomp.Tab3(p.Main, tr("章節", "Chapters"), tr("書籍資訊", "Book Info"), tr("樣式", "Style"))
 
-	chapters, ok := chaptersTab(p, tabChapters, lines, hashOf(fileKey, enc, removeEmptyLines))
+	chapters, ok := chaptersTab(p, tabChapters, lines, hashOf(fileKey, enc, removeEmptyLines), fileKey+enc, sugs)
 	if !ok {
 		return nil
 	}
@@ -139,11 +146,17 @@ type chapterSet struct {
 	keepHead bool
 }
 
-func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesKey string) (chapterSet, bool) {
+func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesKey, textKey string, sugs []novel.Suggestion) (chapterSet, bool) {
+	defAllow := tr("第.*章.*", "Chapter.*")
+	detected := len(sugs) > 0 && sugs[0].Score >= suggestScore
+	if detected {
+		defAllow = sugs[0].Pattern
+	}
 	allow := nonEmptyLines(tgcomp.Textarea(c, tr("標題允許清單", "Title allowlist"),
-		&tgcomp.TextareaConf{Default: tr("第.*章.*", "Chapter.*")}))
+		&tgcomp.TextareaConf{Default: defAllow, ResetKey: textKey}))
 	tgcomp.Caption(c, tr("符合任一正規表示式（從行首比對）的行即為章節標題。",
 		"Lines matching any regex (from the line start) are chapter titles."))
+	suggestions(c, sugs, detected)
 	block := nonEmptyLines(tgcomp.Textarea(c, tr("標題封鎖清單", "Title blocklist")))
 	tgcomp.Caption(c, tr("包含任一行內容的行不會被視為標題。", "Lines containing any of these lines are never titles."))
 
@@ -213,6 +226,29 @@ func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesK
 		})
 	}
 	return set, true
+}
+
+// suggestions reports the detected title patterns.
+func suggestions(c *tgframe.Container, sugs []novel.Suggestion, detected bool) {
+	if detected {
+		tgcomp.Caption(c, fmt.Sprintf(tr("已依本書內容自動偵測標題格式（信心 %.0f%%）。",
+			"Title format detected from this book (confidence %.0f%%)."), sugs[0].Score*100))
+	} else {
+		tgcomp.Caption(c, tr("無法確定本書的標題格式，使用預設值。", "Could not tell this book's title format; using the default."))
+	}
+	if len(sugs) == 0 {
+		return
+	}
+	exp := tgcomp.Expand(c, tr("偵測到的標題格式", "Detected title formats"), false)
+	rows := make([][]string, len(sugs))
+	for i, s := range sugs {
+		rows[i] = []string{fmt.Sprintf("%.0f%%", s.Score*100), strconv.Itoa(s.Count), s.Pattern, strings.Join(s.Samples, " / ")}
+	}
+	tgcomp.DataFrame(exp, []string{tr("信心", "Confidence"), tr("行數", "Lines"), tr("正規表示式", "Regex"), tr("範例", "Samples")}, rows, &tgcomp.DataFrameConf{
+		Base: tgframe.Base{ID: "suggestions"},
+	})
+	tgcomp.Caption(exp, tr("信心由手調規則估算：標題是否短、無句末標點、編號是否連續、章節長度是否合理。可複製到允許清單使用。",
+		"Confidence comes from hand-tuned rules: short lines, no closing punctuation, consecutive numbers, plausible chapter lengths. Copy a regex into the allowlist to use it."))
 }
 
 func nonEmptyLines(s string) []string {
