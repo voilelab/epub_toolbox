@@ -190,6 +190,29 @@ func TestNovelPageOptions(t *testing.T) {
 	}
 }
 
+func TestNovelPageDetect(t *testing.T) {
+	var sb strings.Builder
+	for _, n := range []string{"一", "二", "三", "四", "五"} {
+		sb.WriteString("【" + n + "】\n\n內文。\n內文。\n內文。\n\n")
+	}
+	s := newState(t)
+	upload(t, s, novelFileID, "a.txt", []byte(sb.String()))
+
+	r := runPage(t, "novel", s)
+	for _, want := range []string{"章節數：6", "已依本書內容自動偵測標題格式", "【五】"} {
+		if !r.has(want) {
+			t.Errorf("missing %q", want)
+		}
+	}
+
+	// A new file resets the allowlist to its own default.
+	upload(t, s, novelFileID, "b.txt", []byte(novelText))
+	r = runPage(t, "novel", s)
+	if !r.has("章節數：3") || !r.has("無法確定本書的標題格式") {
+		t.Error("allowlist not reset for a new file")
+	}
+}
+
 func TestNovelPageInvalidRegex(t *testing.T) {
 	s := newState(t)
 	upload(t, s, novelFileID, "a.txt", []byte(novelText))
