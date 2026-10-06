@@ -1,0 +1,39 @@
+name: Release
+
+# 將 main 快轉到 release 分支並部署 GitHub Pages
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Release branch
+        required: true
+        default: release/1.0
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: ${{ inputs.branch }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Validate branch name
+        run: |
+          [[ "$BRANCH" =~ ^release/[0-9A-Za-z._-]+$ ]] || { echo "invalid branch: $BRANCH"; exit 1; }
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      # 只允許 fast-forward，release 分支有 main 沒有的 commit 時會失敗
+      - name: Push main to release branch
+        run: git push origin "HEAD:refs/heads/$BRANCH"
+      # GITHUB_TOKEN 的 push 不會觸發 workflow，需手動 dispatch
+      - name: Trigger Pages deploy
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
