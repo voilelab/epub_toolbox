@@ -2,10 +2,9 @@ package main
 
 import (
 	"testing"
-	"time"
 
 	"github.com/voilelab/epub_toolbox/internal/i18n"
-	"github.com/voilelab/toolgui/toolgui/tgframe"
+	"github.com/voilelab/toolgui/toolgui/tgtest"
 )
 
 // TestPagesRender draws every page once per language with an empty state.
@@ -20,31 +19,8 @@ func TestPagesRender(t *testing.T) {
 }
 
 func testPageRender(t *testing.T, page string) {
-	packs := make(chan any, 256)
-	s, err := tgframe.NewSession(newApp(), page, tgframe.NewState(), func(pack any) error {
-		packs <- pack
-		return nil
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer s.Close()
-
-	if err := s.HandleRawEvent([]byte("{}")); err != nil {
-		t.Fatal(err)
-	}
-	for {
-		select {
-		case pack := <-packs:
-			if r, ok := pack.(*tgframe.ResultPack); ok {
-				if !r.Success {
-					t.Fatalf("run failed: %s", r.Error)
-				}
-				return
-			}
-		case <-time.After(5 * time.Second):
-			t.Fatal("timeout")
-		}
+	if err := tgtest.Open(t, newApp(), page).Err(); err != nil {
+		t.Fatalf("run failed: %v", err)
 	}
 }
 

@@ -3,7 +3,6 @@ package main
 import (
 	"archive/zip"
 	"bytes"
-	"encoding/json"
 	"image"
 	"image/png"
 	"io"
@@ -12,92 +11,44 @@ import (
 
 	"github.com/voilelab/epub_toolbox/internal/i18n"
 	"github.com/voilelab/toolgui/toolgui/tgframe"
+	"github.com/voilelab/toolgui/toolgui/tgtest"
 )
 
-const (
-	novelFileID  = "fileupload_component_選擇 txt 檔"
-	imagesFileID = "fileupload_component_選擇圖片或 zip 檔"
-	allowID      = "textarea_component_標題允許清單"
-	blockID      = "textarea_component_標題封鎖清單"
-	coverFileID  = "fileupload_component_封面"
-)
-
-// pageRun is the components one run drew, as JSON.
-type pageRun []map[string]any
-
-func runPage(t *testing.T, page string, s *tgframe.State) pageRun {
+// openWith opens page and uploads name to the file input labelled label.
+func openWith(t *testing.T, page, label, name string, data []byte) *tgtest.Page {
 	t.Helper()
-	var out pageRun
-	err := newApp().Run(page, s, func(p tgframe.NotifyPack) {
-		bs, err := json.Marshal(p)
-		if err != nil {
-			t.Fatal(err)
-		}
-		var m struct {
-			Component map[string]any `json:"component"`
-		}
-		if err := json.Unmarshal(bs, &m); err != nil {
-			t.Fatal(err)
-		}
-		if m.Component != nil {
-			out = append(out, m.Component)
-		}
-	})
-	if err != nil {
-		t.Fatalf("run %s: %v", page, err)
-	}
-	return out
+	p := tgtest.Open(t, newApp(), page)
+	p.GetByLabel(label).Upload(name, data)
+	return p
 }
 
-// has reports whether any component carries s in its JSON.
-func (r pageRun) has(s string) bool {
-	var sb strings.Builder
-	enc := json.NewEncoder(&sb)
-	enc.SetEscapeHTML(false)
-	_ = enc.Encode(r)
-	return strings.Contains(sb.String(), s)
-}
-
-func (r pageRun) find(name string) map[string]any {
-	for _, c := range r {
-		if c["name"] == name {
-			return c
-		}
-	}
-	return nil
-}
-
-func upload(t *testing.T, s *tgframe.State, id, name string, data []byte) {
+func openNovel(t *testing.T, name, text string) *tgtest.Page {
 	t.Helper()
-	s.Set(id, map[string]any{"name": name})
-	if _, err := s.WriteFile(id, name, bytes.NewReader(data)); err != nil {
-		t.Fatal(err)
-	}
+	return openWith(t, "novel", "選擇 txt 檔", name, []byte(text))
 }
 
-func uploadMany(t *testing.T, s *tgframe.State, id string, files map[string][]byte, order []string) {
+// hasAll reports each of want the page doesn't show.
+func hasAll(t *testing.T, p *tgtest.Page, want ...string) {
 	t.Helper()
-	objs := make([]map[string]any, len(order))
-	for i, name := range order {
-		objs[i] = map[string]any{"name": name}
-		if _, err := s.WriteFile(tgframe.FileKey(id, i), name, bytes.NewReader(files[name])); err != nil {
-			t.Fatal(err)
+	for _, w := range want {
+		if !p.HasText(w) {
+			t.Errorf("missing %q", w)
 		}
 	}
-	s.Set(id, objs)
 }
 
 // download clicks the download button and returns the built file.
-func download(t *testing.T, page string, s *tgframe.State) []byte {
+func download(t *testing.T, p *tgtest.Page) []byte {
 	t.Helper()
-	btn := runPage(t, page, s).find("download_file_component")
-	if btn == nil {
-		t.Fatal("no download button")
+	btns := p.FindByName("download_file_component")
+	if len(btns) != 1 {
+		t.Fatalf("%d download buttons", len(btns))
 	}
-	s.SetClickID(btn["id"].(string))
-	btn = runPage(t, page, s).find("download_file_component")
-	s.SetClickID("")
-	d := s.GetDownload(btn["token"].(string))
+	btns[0].Click()
+	if err := p.Err(); err != nil {
+		t.Fatal(err)
+	}
+	d := p.State().GetDownload(p.FindByName("download_file_component")[0].String("token"))
 	if d == nil {
 		t.Fatal("no download")
 	}
@@ -142,26 +93,13 @@ func pngBytes(t *testing.T) []byte {
 	return buf.Bytes()
 }
 
-func newState(t *testing.T) *tgframe.State {
-	s := tgframe.NewState()
-	t.Cleanup(s.Destroy)
-	return s
-}
-
 const novelText = "前言\n\n第一章 開始\n從前有座山。\n\n第二章 結束\n山上有座廟。\n"
 
 func TestNovelPage(t *testing.T) {
-	s := newState(t)
-	upload(t, s, novelFileID, "我的書.TXT", []byte(novelText))
+	p := openNovel(t, "我的書.TXT", novelText)
+	hasAll(t, p, "章節數：3", "行數：8", "第一章 開始", "下載 我的書.epub")
 
-	r := runPage(t, "novel", s)
-	for _, want := range []string{"章節數：3", "行數：8", "第一章 開始", "下載 我的書.epub"} {
-		if !r.has(want) {
-			t.Errorf("missing %q", want)
-		}
-	}
-
-	text := epubText(t, download(t, "novel", s))
+	text := epubText(t, download(t, p))
 	for _, want := range []string{"<dc:title>我的書</dc:title>", "第一章 開始", "從前有座山。", "山上有座廟。"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("epub missing %q", want)
@@ -170,23 +108,22 @@ func TestNovelPage(t *testing.T) {
 }
 
 func TestNovelPageOptions(t *testing.T) {
-	s := newState(t)
-	upload(t, s, novelFileID, "a.txt", []byte(novelText))
-	s.Set("checkbox_component_移除空行", true)
-	s.Set("checkbox_component_移除空章節", true)
-	s.Set("checkbox_component_style_justify_1", true)
-	upload(t, s, coverFileID, "c.png", pngBytes(t))
+	p := openNovel(t, "a.txt", novelText)
+	p.GetByLabel("移除空行").Input(true)
+	p.GetByLabel("移除空章節").Input(true)
+	p.GetByLabel("左右對齊").Input(true)
+	p.GetByLabel("封面").Upload("c.png", pngBytes(t))
 
-	r := runPage(t, "novel", s)
-	if !r.has("行數：5") {
-		t.Error("empty lines not removed")
-	}
-	if !r.has("已自訂（以「中文橫排」為基礎）。") {
-		t.Error("customized style not shown")
-	}
-	text := epubText(t, download(t, "novel", s))
+	hasAll(t, p, "行數：5", "已自訂（以「中文橫排」為基礎）。")
+	text := epubText(t, download(t, p))
 	if !strings.Contains(text, "text-align: justify;") || !strings.Contains(text, "EPUB/cover.xhtml") {
 		t.Error("epub misses style or cover")
+	}
+
+	// A new template resets the options.
+	p.GetByLabel("排版模板").Select(0)
+	if p.HasText("已自訂") {
+		t.Error("options kept after switching template")
 	}
 }
 
@@ -195,84 +132,52 @@ func TestNovelPageDetect(t *testing.T) {
 	for _, n := range []string{"一", "二", "三", "四", "五"} {
 		sb.WriteString("【" + n + "】\n\n內文。\n內文。\n內文。\n\n")
 	}
-	s := newState(t)
-	upload(t, s, novelFileID, "a.txt", []byte(sb.String()))
-
-	r := runPage(t, "novel", s)
-	for _, want := range []string{"章節數：6", "已依本書內容自動偵測標題格式", "【五】"} {
-		if !r.has(want) {
-			t.Errorf("missing %q", want)
-		}
-	}
+	p := openNovel(t, "a.txt", sb.String())
+	hasAll(t, p, "章節數：6", "已依本書內容自動偵測標題格式", "【五】")
 
 	// A new file resets the allowlist to its own default.
-	upload(t, s, novelFileID, "b.txt", []byte(novelText))
-	r = runPage(t, "novel", s)
-	if !r.has("章節數：3") || !r.has("無法確定本書的標題格式") {
-		t.Error("allowlist not reset for a new file")
-	}
+	p.GetByLabel("選擇 txt 檔").Upload("b.txt", []byte(novelText))
+	hasAll(t, p, "章節數：3", "無法確定本書的標題格式")
 }
 
 func TestNovelPageInvalidRegex(t *testing.T) {
-	s := newState(t)
-	upload(t, s, novelFileID, "a.txt", []byte(novelText))
-	s.Set(allowID, "(")
+	p := openNovel(t, "a.txt", novelText)
+	p.GetByLabel("標題允許清單").Input("(")
 
-	r := runPage(t, "novel", s)
-	if r.find("message_component") == nil {
+	if len(p.FindByName("message_component")) == 0 {
 		t.Error("no error message")
 	}
-	if r.find("download_file_component") != nil {
+	if len(p.FindByName("download_file_component")) != 0 {
 		t.Error("download shown for a bad regex")
 	}
 }
 
 func TestNovelPageOverlap(t *testing.T) {
-	s := newState(t)
-	upload(t, s, novelFileID, "a.txt", []byte(novelText))
-	s.Set(blockID, "第.*章.*\r\n\n")
-
-	if !runPage(t, "novel", s).has("封鎖清單與允許清單有相同的行。") {
-		t.Error("no overlap warning")
-	}
+	p := openNovel(t, "a.txt", novelText)
+	p.GetByLabel("標題封鎖清單").Input("第.*章.*\r\n\n")
+	hasAll(t, p, "封鎖清單與允許清單有相同的行。")
 }
 
 func TestNovelPageLong(t *testing.T) {
 	// The head is previewed by default.
 	head := strings.Repeat("序\n", previewLines+1)
-	s := newState(t)
-	upload(t, s, novelFileID, "a.txt", []byte(head+"第一章\n內文\n"))
+	p := openNovel(t, "a.txt", head+"第一章\n內文\n")
+	hasAll(t, p, "部分章節超過", "顯示前 1000 行")
 
-	r := runPage(t, "novel", s)
-	if !r.has("部分章節超過") {
-		t.Error("no long chapter warning")
-	}
-	if !r.has("顯示前 1000 行") {
-		t.Error("preview not truncated")
-	}
 	// A long head is kept by default; dropping it warns.
-	if !strings.Contains(epubText(t, download(t, "novel", s)), "序") {
+	if !strings.Contains(epubText(t, download(t, p)), "序") {
 		t.Error("long head not kept")
 	}
-	for _, c := range r {
-		if id, _ := c["id"].(string); strings.HasPrefix(id, "checkbox_component_keep_head_") {
-			s.Set(id, false)
-		}
-	}
-	if !runPage(t, "novel", s).has("其餘不會出現在書中") {
-		t.Error("no dropped head warning")
-	}
+	p.GetByLabel("將開頭放入書中").Input(false)
+	hasAll(t, p, "其餘不會出現在書中")
 }
 
 func TestNovelPageEmptyBook(t *testing.T) {
-	s := newState(t)
-	upload(t, s, novelFileID, "a.txt", []byte("沒有標題\n"))
-	s.Set("textarea_component_簡介", "")
+	p := openNovel(t, "a.txt", "沒有標題\n")
+	p.GetByLabel("簡介").Input("")
 
-	btn := runPage(t, "novel", s).find("download_file_component")
-	s.SetClickID(btn["id"].(string))
-	err := newApp().Run("novel", s, func(tgframe.NotifyPack) {})
-	if err == nil || !strings.Contains(err.Error(), "書中沒有任何內容") {
+	p.FindByName("download_file_component")[0].Click()
+	if err := p.Err(); err == nil || !strings.Contains(err.Error(), "書中沒有任何內容") {
 		t.Errorf("err = %v", err)
 	}
 }
@@ -280,13 +185,8 @@ func TestNovelPageEmptyBook(t *testing.T) {
 func TestNovelPageEN(t *testing.T) {
 	i18n.Set("en")
 	defer i18n.Set("zh-TW")
-	s := newState(t)
-	upload(t, s, "fileupload_component_Choose a txt file", "a.txt", []byte("Intro\nChapter 1\nHello\n"))
-
-	r := runPage(t, "novel", s)
-	if !r.has("Chapters: 2") || !r.has("No body styling; the reader app decides.") {
-		t.Error("English page not drawn")
-	}
+	p := openWith(t, "novel", "Choose a txt file", "a.txt", []byte("Intro\nChapter 1\nHello\n"))
+	hasAll(t, p, "Chapters: 2", "No body styling; the reader app decides.")
 }
 
 func TestImagesPage(t *testing.T) {
@@ -299,17 +199,11 @@ func TestImagesPage(t *testing.T) {
 	}
 	zw.Close()
 
-	s := newState(t)
-	uploadMany(t, s, imagesFileID, map[string][]byte{"漫畫.zip": zbuf.Bytes()}, []string{"漫畫.zip"})
-	s.Set("checkbox_component_以第一張圖片作為封面", true)
+	p := openWith(t, "images", "選擇圖片或 zip 檔", "漫畫.zip", zbuf.Bytes())
+	p.GetByLabel("以第一張圖片作為封面").Input(true)
+	hasAll(t, p, "圖片數：2", "1. 2.png", "下載 漫畫.epub")
 
-	r := runPage(t, "images", s)
-	for _, want := range []string{"圖片數：2", "1. 2.png", "下載 漫畫.epub"} {
-		if !r.has(want) {
-			t.Errorf("missing %q", want)
-		}
-	}
-	text := epubText(t, download(t, "images", s))
+	text := epubText(t, download(t, p))
 	if !strings.Contains(text, "<dc:title>漫畫</dc:title>") || !strings.Contains(text, "EPUB/cover.xhtml") {
 		t.Error("epub misses title or cover")
 	}
@@ -317,26 +211,20 @@ func TestImagesPage(t *testing.T) {
 
 func TestImagesPageFiles(t *testing.T) {
 	img := pngBytes(t)
-	s := newState(t)
-	uploadMany(t, s, imagesFileID, map[string][]byte{"a.png": img, "b.png": img}, []string{"b.png", "a.png"})
-	upload(t, s, coverFileID, "c.png", img)
+	p := tgtest.Open(t, newApp(), "images")
+	p.GetByLabel("選擇圖片或 zip 檔").UploadFiles(tgtest.File{Name: "b.png", Body: img}, tgtest.File{Name: "a.png", Body: img})
+	p.GetByLabel("封面").Upload("c.png", img)
 
-	r := runPage(t, "images", s)
-	if !r.has("圖片數：2") || !r.has("下載 book.epub") {
-		t.Error("images page not drawn")
-	}
-	if r.has("以第一張圖片作為封面") {
+	hasAll(t, p, "圖片數：2", "下載 book.epub")
+	if p.HasText("以第一張圖片作為封面") {
 		t.Error("first-as-cover offered with a cover")
 	}
-	download(t, "images", s)
+	download(t, p)
 }
 
 func TestImagesPageError(t *testing.T) {
-	s := newState(t)
-	uploadMany(t, s, imagesFileID, map[string][]byte{"a.zip": []byte("not a zip")}, []string{"a.zip"})
-
-	r := runPage(t, "images", s)
-	if r.find("message_component") == nil || r.find("download_file_component") != nil {
+	p := openWith(t, "images", "選擇圖片或 zip 檔", "a.zip", []byte("not a zip"))
+	if len(p.FindByName("message_component")) == 0 || len(p.FindByName("download_file_component")) != 0 {
 		t.Error("bad zip not reported")
 	}
 }
@@ -377,7 +265,8 @@ func TestHash(t *testing.T) {
 }
 
 func TestMemo(t *testing.T) {
-	s := newState(t)
+	s := tgframe.NewState()
+	t.Cleanup(s.Destroy)
 	calls := 0
 	f := func() int { calls++; return calls }
 	if memo(s, "x", "k1", f) != 1 || memo(s, "x", "k1", f) != 1 {

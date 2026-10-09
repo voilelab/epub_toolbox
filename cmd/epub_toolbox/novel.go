@@ -104,19 +104,18 @@ func styleForm(c *tgframe.Container) novel.Style {
 	t := novel.Templates[*idx]
 	desc := tgcomp.Column1(c) // filled once the options are known
 
-	// IDs carry the template so switching it resets the options.
+	// Scoped by template so switching it resets the options.
 	d := t.Style()
-	box := func(id, label string, v bool) bool {
-		return tgcomp.Checkbox(c, label, &tgcomp.CheckboxConf{
-			Base: tgframe.Base{ID: "style_" + id + "_" + strconv.Itoa(*idx)}, Default: v,
-		})
+	sc := c.Scope("template_" + strconv.Itoa(*idx))
+	box := func(label string, v bool) bool {
+		return tgcomp.Checkbox(sc, label, &tgcomp.CheckboxConf{Default: v})
 	}
 	s := novel.Style{
-		Indent:      box("indent", tr("首行縮排兩字", "Two-character first-line indent"), d.Indent),
-		NoGap:       box("nogap", tr("取消段距", "No paragraph gap"), d.NoGap),
-		Justify:     box("justify", tr("左右對齊", "Justify"), d.Justify),
-		CenterTitle: box("center", tr("章節標題置中", "Center chapter titles"), d.CenterTitle),
-		Vertical:    box("vertical", tr("直排（向左翻頁）", "Vertical (pages turn left)"), d.Vertical),
+		Indent:      box(tr("首行縮排兩字", "Two-character first-line indent"), d.Indent),
+		NoGap:       box(tr("取消段距", "No paragraph gap"), d.NoGap),
+		Justify:     box(tr("左右對齊", "Justify"), d.Justify),
+		CenterTitle: box(tr("章節標題置中", "Center chapter titles"), d.CenterTitle),
+		Vertical:    box(tr("直排（向左翻頁）", "Vertical (pages turn left)"), d.Vertical),
 	}
 	tgcomp.Caption(c, tr("字體、字級與顏色交給閱讀器設定。", "Font, size and colors are left to the reader app."))
 
