@@ -41,50 +41,45 @@ func HomePage(p *tgframe.Params) error {
 	if langSwitch {
 		tgcomp.Link(p.Main, tr("🌐 English", "🌐 中文"), tr("?lang=en", "?lang=zh-TW"))
 	}
-	tgcomp.Markdown(p.Main, tr(`所有處理都在瀏覽器中完成，檔案不會離開你的電腦。線上版以 Umami 統計匿名的瀏覽與下載次數，不使用 cookie。
+	tgcomp.Markdown(p.Main, tr("所有處理都在瀏覽器中完成，檔案不會離開你的電腦。線上版以 Umami 統計匿名的瀏覽與下載次數，不使用 cookie。",
+		"Everything runs in your browser; your files never leave your computer. The online version counts anonymous visits and downloads with Umami, without cookies."))
 
-請從側邊導覽選擇工具。
-
-### 📘 小說 TXT 轉 EPUB
+	tgcomp.Markdown(p.Main, tr(`### 📘 小說 TXT 轉 EPUB
 
 將小說純文字檔切分成章節並製作成 EPUB。
 
 1. 選擇小說的 TXT 檔。
 2. 用比對章節標題的正規表示式切分章節。
 3. 填寫書籍資訊。
-4. 按下 **下載** 製作並儲存 EPUB。
-
-### 🖼️ 圖片轉 EPUB（實驗性）
-
-將圖片打包成 EPUB，每頁一張圖。此功能仍在實驗階段，輸出結果可能不穩定。
-
-1. 選擇圖片（PNG、JPEG、GIF 或 WebP）或其 zip 壓縮檔；頁面依檔名排序。
-2. 填寫書籍資訊。
-3. 按下 **下載** 製作並儲存 EPUB。
-
-原始碼：[voilelab/epub_toolbox](https://github.com/voilelab/epub_toolbox)，以 [ToolGUI](https://github.com/voilelab/toolgui) 製作。`,
-		`Everything runs in your browser; your files never leave your computer. The online version counts anonymous visits and downloads with Umami, without cookies.
-
-Pick a tool from the side navigation.
-
-### 📘 Novel TXT to EPUB
+4. 按下 **下載** 製作並儲存 EPUB。`,
+		`### 📘 Novel TXT to EPUB
 
 Split a plain-text novel into chapters and make an EPUB.
 
 1. Choose the novel's TXT file.
 2. Split it into chapters with regexes that match chapter titles.
 3. Fill in the book info.
-4. Press **Download** to build and save the EPUB.
+4. Press **Download** to build and save the EPUB.`))
+	tgcomp.PageLink(p.Main, tr("👉 開始製作", "👉 Start"), "novel", nil)
 
-### 🖼️ Images to EPUB (Experimental)
+	tgcomp.Markdown(p.Main, tr(`### 🖼️ 圖片轉 EPUB（實驗性）
+
+將圖片打包成 EPUB，每頁一張圖。此功能仍在實驗階段，輸出結果可能不穩定。
+
+1. 選擇圖片（PNG、JPEG、GIF 或 WebP）或其 zip 壓縮檔；頁面依檔名排序。
+2. 填寫書籍資訊。
+3. 按下 **下載** 製作並儲存 EPUB。`,
+		`### 🖼️ Images to EPUB (Experimental)
 
 Pack images into an EPUB, one image per page. This feature is experimental; output may be unreliable.
 
 1. Choose images (PNG, JPEG, GIF or WebP) or zip archives of them; pages are sorted by file name.
 2. Fill in the book info.
-3. Press **Download** to build and save the EPUB.
+3. Press **Download** to build and save the EPUB.`))
+	tgcomp.PageLink(p.Main, tr("👉 開始製作", "👉 Start"), "images", nil)
 
-Source: [voilelab/epub_toolbox](https://github.com/voilelab/epub_toolbox), made with [ToolGUI](https://github.com/voilelab/toolgui).`))
+	tgcomp.Markdown(p.Main, tr("原始碼：[voilelab/epub_toolbox](https://github.com/voilelab/epub_toolbox)，以 [ToolGUI](https://github.com/voilelab/toolgui) 製作。",
+		"Source: [voilelab/epub_toolbox](https://github.com/voilelab/epub_toolbox), made with [ToolGUI](https://github.com/voilelab/toolgui)."))
 	tgcomp.Markdown(p.Main, feedbackMarkdown())
 	return nil
 }

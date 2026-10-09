@@ -29,6 +29,7 @@ func NovelPage(p *tgframe.Params) error {
 	file := tgcomp.FileUpload(p.Sidebar, tr("選擇 txt 檔", "Choose a txt file"), ".txt,text/plain")
 	if file == nil {
 		tgcomp.MessageInfo(p.Main, tr("👈 請選擇要處理的文字檔。", "👈 Choose a text file to process."))
+		tgcomp.PageLink(p.Main, tr("📑 如何用正規表示式篩選章節標題", "📑 How to match chapter titles with regex"), "regex", nil)
 		return nil
 	}
 	raw, err := file.Bytes()
@@ -120,8 +121,8 @@ func styleForm(c *tgframe.Container) novel.Style {
 	tgcomp.Caption(c, tr("字體、字級與顏色交給閱讀器設定。", "Font, size and colors are left to the reader app."))
 
 	adv := tgcomp.Expand(c, tr("進階：自訂 CSS", "Advanced: custom CSS"), false)
-	s.Extra = tgcomp.Textarea(adv, tr("自訂 CSS", "Custom CSS"), &tgcomp.TextareaConf{
-		Height: 6,
+	s.Extra = tgcomp.CodeInput(adv, tr("自訂 CSS", "Custom CSS"), &tgcomp.CodeInputConf{
+		Language: "css", Height: 6,
 	})
 	tgcomp.Caption(adv, tr("例如 p { line-height: 1.8; }。加在產生的 CSS 之後，可覆寫上面的設定。寫死字級或顏色可能讓閱讀器設定或夜間模式失效。",
 		"E.g. p { line-height: 1.8; }. Appended after the generated CSS, so it overrides the options above. Fixed sizes or colors may break reader settings or night mode."))
@@ -240,12 +241,19 @@ func suggestions(c *tgframe.Container, sugs []novel.Suggestion, detected bool) {
 		return
 	}
 	exp := tgcomp.Expand(c, tr("偵測到的標題格式（實驗性）", "Detected title formats (Experimental)"), false)
-	rows := make([][]string, len(sugs))
+	rows := make([][]tgcomp.Cell, len(sugs))
 	for i, s := range sugs {
-		rows[i] = []string{fmt.Sprintf("%.0f%%", s.Score*100), strconv.Itoa(s.Count), s.Pattern, strings.Join(s.Samples, " / ")}
+		rows[i] = []tgcomp.Cell{tgcomp.NumberCell(s.Score), tgcomp.NumberCell(float64(s.Count)),
+			tgcomp.TextCell(s.Pattern), tgcomp.TextCell(strings.Join(s.Samples, " / "))}
 	}
-	tgcomp.DataFrame(exp, []string{tr("信心", "Confidence"), tr("行數", "Lines"), tr("正規表示式", "Regex"), tr("範例", "Samples")}, rows, &tgcomp.DataFrameConf{
+	tgcomp.DataFrameCells(exp, []string{tr("信心", "Confidence"), tr("行數", "Lines"), tr("正規表示式", "Regex"), tr("範例", "Samples")}, rows, &tgcomp.DataFrameConf{
 		Base: tgframe.Base{ID: "suggestions"},
+		ColumnConf: []tgcomp.DataFrameColumnConf{
+			{Type: tgcomp.ColumnTypeNumber, Format: &tgcomp.NumberFormat{Percent: true}},
+			{Type: tgcomp.ColumnTypeNumber},
+			{},
+			{},
+		},
 	})
 	tgcomp.Caption(exp, tr("信心由手調規則估算：標題是否短、無句末標點、編號是否連續、章節長度是否合理。可複製到允許清單使用。",
 		"Confidence comes from hand-tuned rules: short lines, no closing punctuation, consecutive numbers, plausible chapter lengths. Copy a regex into the allowlist to use it."))

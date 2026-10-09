@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"fmt"
 	"image"
 	"image/png"
 	"io"
@@ -127,6 +128,32 @@ func TestNovelPageOptions(t *testing.T) {
 	}
 }
 
+func TestNovelPageRegexLink(t *testing.T) {
+	p := tgtest.Open(t, newApp(), "novel")
+	if l := p.FindByName("page_link_component"); len(l) != 1 || l[0].String("page") != "regex" {
+		t.Error("no regex guide link before a file is chosen")
+	}
+}
+
+func TestNovelPageCustomCSS(t *testing.T) {
+	p := openNovel(t, "a.txt", novelText)
+	p.GetByLabel("自訂 CSS").Input("  p { line-height: 1.8; }\n")
+	if !strings.Contains(epubText(t, download(t, p)), "p { line-height: 1.8; }") {
+		t.Error("custom CSS not in epub")
+	}
+}
+
+func TestHomePageLinks(t *testing.T) {
+	p := tgtest.Open(t, newApp(), "index")
+	var pages []string
+	for _, n := range p.FindByName("page_link_component") {
+		pages = append(pages, n.String("page"))
+	}
+	if got := strings.Join(pages, ","); got != "novel,images" {
+		t.Errorf("links = %s", got)
+	}
+}
+
 func TestNovelPageDetect(t *testing.T) {
 	var sb strings.Builder
 	for _, n := range []string{"一", "二", "三", "四", "五"} {
@@ -134,6 +161,13 @@ func TestNovelPageDetect(t *testing.T) {
 	}
 	p := openNovel(t, "a.txt", sb.String())
 	hasAll(t, p, "章節數：6", "已依本書內容自動偵測標題格式", "【五】")
+
+	// Confidence sorts as a number but shows as a percentage.
+	sugs := p.Get("dataframe_component_suggestions").Prop("rows").([]any)
+	c := sugs[0].([]any)[0].(map[string]any)
+	if v, _ := c["value"].(float64); c["display"] != fmt.Sprintf("%.0f%%", v*100) {
+		t.Errorf("confidence cell = %v", c)
+	}
 
 	// A new file resets the allowlist to its own default.
 	p.GetByLabel("選擇 txt 檔").Upload("b.txt", []byte(novelText))
