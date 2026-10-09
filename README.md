@@ -44,7 +44,7 @@
 
 ## 執行
 
-需要 Go 1.27.1 以上（或設定 `GOTOOLCHAIN=auto`）。
+需要 Go 1.27.2 以上（或設定 `GOTOOLCHAIN=auto`）。
 
 ```bash
 # 瀏覽器（WebAssembly）
