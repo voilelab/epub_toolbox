@@ -20,12 +20,18 @@ type memoEntry[T any] struct {
 // memo returns f() cached in slot, recomputing when key changes.
 // Only the latest value is kept, so memory stays bounded.
 func memo[T any](s *tgframe.State, slot, key string, f func() T) T {
+	v, _ := memoFresh(s, slot, key, f)
+	return v
+}
+
+// memoFresh is memo that also reports whether f ran, i.e. key is new.
+func memoFresh[T any](s *tgframe.State, slot, key string, f func() T) (T, bool) {
 	if e, ok := s.GetFuncCache[memoEntry[T]](slot); ok && e.key == key {
-		return e.v
+		return e.v, false
 	}
 	v := f()
 	s.SetFuncCache(slot, memoEntry[T]{key, v})
-	return v
+	return v, true
 }
 
 func hashOf(parts ...any) string {
@@ -90,13 +96,19 @@ var track = func(event string, data map[string]any) {}
 func exportEpub(p *tgframe.Params, tool, title string, build func() ([]byte, error)) {
 	tgcomp.Divider(p.Main)
 	filename := safeFilename(title) + ".epub"
+	built := false
 	tgcomp.DownloadFileFunc(p.Main, tr("下載 ", "Download ")+filename, func() ([]byte, error) {
 		track("download", map[string]any{"tool": tool})
-		return build()
+		b, err := build()
+		built = err == nil
+		return b, err
 	}, &tgcomp.DownloadFileConf{
 		Filename: filename,
 		MIME:     "application/epub+zip",
 	})
+	if built {
+		tgcomp.Toast(p.Main, tr("已製作 ", "Made ")+filename, &tgcomp.ToastConf{Icon: "✅"})
+	}
 }
 
 // safeFilename replaces characters most file systems reject.

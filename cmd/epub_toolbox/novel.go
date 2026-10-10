@@ -54,9 +54,12 @@ func NovelPage(p *tgframe.Params) error {
 	})
 
 	// Detection reads blank lines, so it ignores removeEmptyLines.
-	sugs := memo(p.State, "suggest", fileKey+enc, func() []novel.Suggestion {
+	sugs, fresh := memoFresh(p.State, "suggest", fileKey+enc, func() []novel.Suggestion {
 		return novel.Suggest(novel.Lines(text, false))
 	})
+	if fresh {
+		loadedToast(p.Main, enc, sugs)
+	}
 
 	tabChapters, tabMeta, tabStyle := tgcomp.Tab3(p.Main, tr("章節", "Chapters"), tr("書籍資訊", "Book Info"), tr("樣式", "Style"))
 
@@ -226,6 +229,15 @@ func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesK
 		})
 	}
 	return set, true
+}
+
+// loadedToast reports a newly read file: its encoding and detected title format.
+func loadedToast(c *tgframe.Container, enc string, sugs []novel.Suggestion) {
+	msg := tr("已以 ", "Read as ") + enc + tr(" 讀取", "")
+	if len(sugs) > 0 && sugs[0].Score >= suggestScore {
+		msg += tr("，偵測到標題格式 ", "; detected title format ") + sugs[0].Pattern
+	}
+	tgcomp.Toast(c, msg, &tgcomp.ToastConf{Icon: "📄"})
 }
 
 // suggestions reports the detected title patterns.

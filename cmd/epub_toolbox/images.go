@@ -41,7 +41,7 @@ func ImagesPage(p *tgframe.Params) error {
 	}
 	fileKey := hashOf(hashes...)
 
-	z := memo(p.State, "images", fileKey, func() pickedImages {
+	z, fresh := memoFresh(p.State, "images", fileKey, func() pickedImages {
 		imgs, err := imgbook.Read(picked)
 		return pickedImages{imgs, err}
 	})
@@ -50,6 +50,9 @@ func ImagesPage(p *tgframe.Params) error {
 		return nil
 	}
 	imgs := z.imgs
+	if fresh {
+		tgcomp.Toast(p.Main, fmt.Sprintf(tr("已讀取 %d 張圖片", "Read %d images"), len(imgs)), &tgcomp.ToastConf{Icon: "🖼️"})
+	}
 	tgcomp.Text(p.Sidebar, tr("圖片數：", "Images: ")+strconv.Itoa(len(imgs)))
 
 	tabPreview, tabMeta := tgcomp.Tab2(p.Main, tr("圖片預覽", "Preview"), tr("書籍資訊", "Book Info"))

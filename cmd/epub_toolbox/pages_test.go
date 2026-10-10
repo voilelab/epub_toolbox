@@ -320,3 +320,32 @@ func TestBookMetaNoCover(t *testing.T) {
 		t.Errorf("cover = %v, %v", b, err)
 	}
 }
+
+// toasts returns the texts of the toasts fired by the last run.
+func toasts(p *tgtest.Page) []string {
+	var out []string
+	for _, n := range p.FindByName("toast_component") {
+		out = append(out, n.String("text"))
+	}
+	return out
+}
+
+func TestToasts(t *testing.T) {
+	p := openNovel(t, "a.txt", novelText)
+	if got := toasts(p); len(got) != 1 || got[0] != "已以 UTF-8 讀取" {
+		t.Errorf("load toast %q", got)
+	}
+	p.GetByLabel("左右對齊").Input(true)
+	if got := toasts(p); len(got) != 0 {
+		t.Errorf("toast on an unrelated change: %q", got)
+	}
+	download(t, p)
+	if got := toasts(p); len(got) != 1 || got[0] != "已製作 a.epub" {
+		t.Errorf("download toast %q", got)
+	}
+
+	p = openWith(t, "images", "選擇圖片或 zip 檔", "1.png", pngBytes(t))
+	if got := toasts(p); len(got) != 1 || got[0] != "已讀取 1 張圖片" {
+		t.Errorf("images toast %q", got)
+	}
+}
