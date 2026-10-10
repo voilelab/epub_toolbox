@@ -1,7 +1,7 @@
 github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d h1:hrujxIzL1woJ7AwssoOcM/tq5JjjG2yYOc8odClEiXA=
 github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d/go.mod h1:uugorj2VCxiV1x+LzaIdVa9b4S4qGAcH6cbhh4qVxOU=
-github.com/voilelab/toolgui v0.14.0 h1:yV8Li73N7HmNiMmZcQLArXzXJTdJ2ut+H2n11/o3MqI=
-github.com/voilelab/toolgui v0.14.0/go.mod h1:e93gfQHG/n/o8X58i8L8QjwpMKSMB9BTXXi5lK7gE3Y=
+github.com/voilelab/toolgui v0.15.0 h1:Nvv40ATXERlc9VZOAmhCM6XD+GozxMBB5lZOMh8SVjw=
+github.com/voilelab/toolgui v0.15.0/go.mod h1:e93gfQHG/n/o8X58i8L8QjwpMKSMB9BTXXi5lK7gE3Y=
 golang.org/x/net v0.60.0 h1:79p50tfZlm0J9YfoDsSi639qSXNGVwEzOPLCxM2FsYU=
 golang.org/x/net v0.60.0/go.mod h1:2DA/G1UfVbCpQPeWTmMPGY7Cs2PkBkwu743bVX5PIVg=
 golang.org/x/text v0.42.0 h1:JbOZXgfeCPU9gacVtYliJqOhD+zhrEqK4LfdpmlUZqI=
