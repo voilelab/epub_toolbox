@@ -26,8 +26,8 @@ func NovelPage(p *tgframe.Params) error {
 	tgcomp.Title(p.Main, tr("📘 小說 TXT 轉 EPUB", "📘 Novel TXT to EPUB"))
 	tgcomp.Text(p.Main, tr("將小說純文字檔切分成章節並製作成 EPUB。", "Split a plain-text novel into chapters and make an EPUB."))
 
-	// Top bar, sticky on desktop: inputs, then stats and download (added after the tabs).
-	bar := tgcomp.Toolbar(p.Main, &tgcomp.ToolbarConf{Base: tgframe.Base{ID: "file_bar"}, Sticky: true})
+	// Top bars: inputs, then stats and download (filled after the tabs).
+	bar := tgcomp.Toolbar(p.Main)
 	file := tgcomp.FileUpload(bar, tr("選擇 txt 檔", "Choose a txt file"), ".txt,text/plain")
 	if file == nil {
 		tgcomp.MessageInfo(p.Main, tr("👆 請選擇要處理的文字檔。", "👆 Choose a text file to process."))
@@ -49,6 +49,7 @@ func NovelPage(p *tgframe.Params) error {
 	}
 	enc := encs[*encIdx]
 	removeEmptyLines := tgcomp.Checkbox(bar, tr("移除空行", "Remove empty lines"))
+	stats := tgcomp.Toolbar(p.Main)
 
 	text := memo(p.State, "text", fileKey+enc, func() string { return novel.Decode(raw, enc) })
 	lines := memo(p.State, "lines", hashOf(fileKey, enc, removeEmptyLines), func() []string {
@@ -70,16 +71,16 @@ func NovelPage(p *tgframe.Params) error {
 		return nil
 	}
 
-	tgcomp.Metric(bar, tr("行數", "Lines"), strconv.Itoa(len(lines)))
-	tgcomp.Metric(bar, tr("字數", "Characters"), strconv.Itoa(utf8.RuneCountInString(text)))
-	tgcomp.Metric(bar, tr("章節數", "Chapters"), strconv.Itoa(len(chapters.all)))
+	tgcomp.Metric(stats, tr("行數", "Lines"), strconv.Itoa(len(lines)))
+	tgcomp.Metric(stats, tr("字數", "Characters"), strconv.Itoa(utf8.RuneCountInString(text)))
+	tgcomp.Metric(stats, tr("章節數", "Chapters"), strconv.Itoa(len(chapters.all)))
 
 	defTitle, _ := cutExt(file.Name, ".txt")
 	defIntro := strings.TrimSpace(chapters.head.Content(longChapter))
 	meta := metaForm(tabMeta, fileKey, defTitle, defIntro)
 	style := styleForm(tabStyle)
 
-	exportEpub(bar, "novel", meta.Title, func() ([]byte, error) {
+	exportEpub(stats, "novel", meta.Title, func() ([]byte, error) {
 		cover, err := meta.cover()
 		if err != nil {
 			return nil, fmt.Errorf(tr("封面：%w", "cover: %w"), err)
