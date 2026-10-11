@@ -9,3 +9,19 @@
 #toolbar_component_stats {
   column-gap: 1.5rem !important;
 }
+
+/* Home page start links drawn as buttons.
+   Selectors carry a class so they outrank Mantine's, which load later. */
+.toolgui-box a[id^="page_link_component_start_"] {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  border-radius: var(--mantine-radius-default);
+  background-color: var(--mantine-color-blue-filled);
+  color: var(--mantine-color-white);
+  font-weight: 600;
+  text-decoration: none;
+}
+.toolgui-box a[id^="page_link_component_start_"]:hover {
+  background-color: var(--mantine-color-blue-filled-hover);
+  text-decoration: none;
+}

@@ -103,7 +103,7 @@ func styleForm(c *tgframe.Container) novel.Style {
 	if i18n.EN() {
 		def = novel.TemplateReader
 	}
-	idx := tgcomp.Select(c, tr("排版模板", "Layout template"), names, (&tgcomp.SelectConf{}).SetDefault(slices.Index(novel.Templates, def)))
+	idx := tgcomp.Radio(c, tr("排版模板", "Layout template"), names, (&tgcomp.RadioConf{}).SetDefault(slices.Index(novel.Templates, def)))
 	if idx == nil {
 		return novel.Style{}
 	}
@@ -114,7 +114,7 @@ func styleForm(c *tgframe.Container) novel.Style {
 	d := t.Style()
 	sc := c.Scope("template_" + strconv.Itoa(*idx))
 	box := func(label string, v bool) bool {
-		return tgcomp.Checkbox(sc, label, &tgcomp.CheckboxConf{Default: v})
+		return tgcomp.Toggle(sc, label, &tgcomp.ToggleConf{Default: v})
 	}
 	s := novel.Style{
 		Indent:      box(tr("首行縮排兩字", "Two-character first-line indent"), d.Indent),
@@ -125,7 +125,7 @@ func styleForm(c *tgframe.Container) novel.Style {
 	}
 	tgcomp.Caption(c, tr("字體、字級與顏色交給閱讀器設定。", "Font, size and colors are left to the reader app."))
 
-	adv := tgcomp.Expand(c, tr("進階：自訂 CSS", "Advanced: custom CSS"), false)
+	adv := tgcomp.Expand(c, tr("進階：CSS", "Advanced: CSS"), false)
 	s.Extra = tgcomp.CodeInput(adv, tr("自訂 CSS", "Custom CSS"), &tgcomp.CodeInputConf{
 		Language: "css", Height: 6,
 	})
@@ -139,8 +139,8 @@ func styleForm(c *tgframe.Container) novel.Style {
 		tgcomp.Caption(desc, fmt.Sprintf(tr("已自訂（以「%s」為基礎）。", "Customized (based on %s)."), t.Name()))
 	}
 
-	exp := tgcomp.Expand(c, "CSS", false)
-	tgcomp.Code(exp, s.CSS(), &tgcomp.CodeConf{Language: "css"})
+	tgcomp.Caption(adv, tr("書中使用的 CSS：", "CSS used in the book:"))
+	tgcomp.Code(adv, s.CSS(), &tgcomp.CodeConf{Language: "css"})
 	return s
 }
 

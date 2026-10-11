@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/voilelab/epub_toolbox/internal/i18n"
 	"github.com/voilelab/toolgui/toolgui/tgcomp"
+	"github.com/voilelab/toolgui/toolgui/tgcomp/tcutil"
 	"github.com/voilelab/toolgui/toolgui/tgframe"
 )
 
@@ -41,47 +42,52 @@ func HomePage(p *tgframe.Params) error {
 	if langSwitch {
 		tgcomp.Link(p.Main, tr("🌐 English", "🌐 中文"), tr("?lang=en", "?lang=zh-TW"))
 	}
-	tgcomp.Markdown(p.Main, tr("所有處理都在瀏覽器中完成，檔案不會離開你的電腦。線上版以 Umami 統計匿名的瀏覽與下載次數，不使用 cookie。",
-		"Everything runs in your browser; your files never leave your computer. The online version counts anonymous visits and downloads with Umami, without cookies."))
+	tgcomp.Text(p.Main, tr("將小說 TXT 或圖片製作成 EPUB。", "Make EPUBs from novel TXT files or images."))
 
-	tgcomp.Markdown(p.Main, tr(`### 📘 小說 TXT 轉 EPUB
-
-將小說純文字檔切分成章節並製作成 EPUB。
+	// One card per tool, side by side on wide screens.
+	novelCard, imagesCard := tgcomp.EqColumn2(p.Main, &tgcomp.ColumnConf{Base: tgframe.Base{ID: "tools"}})
+	toolCard(novelCard, "novel", tr("📘 小說 TXT 轉 EPUB", "📘 Novel TXT to EPUB"), tr(`將小說純文字檔切分成章節並製作成 EPUB。
 
 1. 選擇小說的 TXT 檔。
 2. 用比對章節標題的正規表示式切分章節。
 3. 填寫書籍資訊。
 4. 按下 **下載** 製作並儲存 EPUB。`,
-		`### 📘 Novel TXT to EPUB
-
-Split a plain-text novel into chapters and make an EPUB.
+		`Split a plain-text novel into chapters and make an EPUB.
 
 1. Choose the novel's TXT file.
 2. Split it into chapters with regexes that match chapter titles.
 3. Fill in the book info.
-4. Press **Download** to build and save the EPUB.`))
-	tgcomp.PageLink(p.Main, tr("👉 開始製作", "👉 Start"), "novel", nil)
-
-	tgcomp.Markdown(p.Main, tr(`### 🖼️ 圖片轉 EPUB（實驗性）
-
-將圖片打包成 EPUB，每頁一張圖。此功能仍在實驗階段，輸出結果可能不穩定。
+4. Press **Download** to build and save the EPUB.`), "")
+	toolCard(imagesCard, "images", tr("🖼️ 圖片轉 EPUB", "🖼️ Images to EPUB"), tr(`將圖片打包成 EPUB，每頁一張圖。
 
 1. 選擇圖片（PNG、JPEG、GIF 或 WebP）或其 zip 壓縮檔；頁面依檔名排序。
 2. 填寫書籍資訊。
 3. 按下 **下載** 製作並儲存 EPUB。`,
-		`### 🖼️ Images to EPUB (Experimental)
-
-Pack images into an EPUB, one image per page. This feature is experimental; output may be unreliable.
+		`Pack images into an EPUB, one image per page.
 
 1. Choose images (PNG, JPEG, GIF or WebP) or zip archives of them; pages are sorted by file name.
 2. Fill in the book info.
-3. Press **Download** to build and save the EPUB.`))
-	tgcomp.PageLink(p.Main, tr("👉 開始製作", "👉 Start"), "images", nil)
+3. Press **Download** to build and save the EPUB.`),
+		tr("🧪 實驗性：輸出結果可能不穩定", "🧪 Experimental: output may be unreliable"))
 
+	tgcomp.Divider(p.Main)
+	tgcomp.Caption(p.Main, tr("所有處理都在瀏覽器中完成，檔案不會離開你的電腦。線上版以 Umami 統計匿名的瀏覽與下載次數，不使用 cookie。",
+		"Everything runs in your browser; your files never leave your computer. The online version counts anonymous visits and downloads with Umami, without cookies."))
 	tgcomp.Markdown(p.Main, tr("原始碼：[voilelab/epub_toolbox](https://github.com/voilelab/epub_toolbox)，以 [ToolGUI](https://github.com/voilelab/toolgui) 製作。",
-		"Source: [voilelab/epub_toolbox](https://github.com/voilelab/epub_toolbox), made with [ToolGUI](https://github.com/voilelab/toolgui)."))
-	tgcomp.Markdown(p.Main, feedbackMarkdown())
+		"Source: [voilelab/epub_toolbox](https://github.com/voilelab/epub_toolbox), made with [ToolGUI](https://github.com/voilelab/toolgui).")+
+		"  \n"+feedbackMarkdown())
 	return nil
+}
+
+// toolCard draws a tool's summary and a link to start it, with an optional warning badge.
+func toolCard(c *tgframe.Container, page, title, steps, badge string) {
+	box := tgcomp.Box(c, &tgcomp.BoxConf{Base: tgframe.Base{ID: "card_" + page}})
+	tgcomp.Subtitle(box, title)
+	if badge != "" {
+		tgcomp.Badge(box, badge, &tgcomp.BadgeConf{Color: tcutil.ColorWarning})
+	}
+	tgcomp.Markdown(box, steps)
+	tgcomp.PageLink(box, tr("開始製作 →", "Start →"), page, nil, &tgcomp.PageLinkConf{Base: tgframe.Base{ID: "start_" + page}})
 }
 
 func RegexPage(p *tgframe.Params) error {
