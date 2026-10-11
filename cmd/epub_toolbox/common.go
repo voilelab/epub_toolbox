@@ -8,6 +8,7 @@ import (
 
 	"github.com/voilelab/epub_toolbox/internal/i18n"
 	"github.com/voilelab/toolgui/toolgui/tgcomp"
+	"github.com/voilelab/toolgui/toolgui/tgcomp/tcutil"
 	"github.com/voilelab/toolgui/toolgui/tgframe"
 )
 
@@ -93,11 +94,10 @@ func metaForm(c *tgframe.Container, resetKey, defTitle, defIntro string) bookMet
 var track = func(event string, data map[string]any) {}
 
 // exportEpub draws the download button; build runs only on click.
-func exportEpub(p *tgframe.Params, tool, title string, build func() ([]byte, error)) {
-	tgcomp.Divider(p.Main)
+func exportEpub(c *tgframe.Container, tool, title string, build func() ([]byte, error)) {
 	filename := safeFilename(title) + ".epub"
 	built := false
-	tgcomp.DownloadFileFunc(p.Main, tr("下載 ", "Download ")+filename, func() ([]byte, error) {
+	tgcomp.DownloadFileFunc(c, tr("⬇ 下載 ", "⬇ Download ")+filename, func() ([]byte, error) {
 		track("download", map[string]any{"tool": tool})
 		b, err := build()
 		built = err == nil
@@ -105,9 +105,10 @@ func exportEpub(p *tgframe.Params, tool, title string, build func() ([]byte, err
 	}, &tgcomp.DownloadFileConf{
 		Filename: filename,
 		MIME:     "application/epub+zip",
+		Color:    tcutil.ColorInfo,
 	})
 	if built {
-		tgcomp.Toast(p.Main, tr("已製作 ", "Made ")+filename, &tgcomp.ToastConf{Icon: "✅"})
+		tgcomp.Toast(c, tr("已製作 ", "Made ")+filename, &tgcomp.ToastConf{Icon: "✅"})
 	}
 }
 
