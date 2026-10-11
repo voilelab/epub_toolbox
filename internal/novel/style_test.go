@@ -76,3 +76,17 @@ func TestTemplateLabels(t *testing.T) {
 		}
 	}
 }
+
+func TestPreviewHTML(t *testing.T) {
+	s := Style{Indent: true, Extra: "p { color: red; } </style><b>"}
+	got := s.PreviewHTML("zh-TW", "第一章 <開始>", []string{"從前有座山。"})
+	for _, w := range []string{`lang="zh-TW"`, "p { text-indent: 2em; }", `<\/style><b>`,
+		"<h1>第一章 &lt;開始&gt;</h1>", "<p>從前有座山。</p>"} {
+		if !strings.Contains(got, w) {
+			t.Errorf("missing %q:\n%s", w, got)
+		}
+	}
+	if strings.Count(got, "</style>") != 2 {
+		t.Errorf("custom CSS closed <style>:\n%s", got)
+	}
+}
