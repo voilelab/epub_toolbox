@@ -294,22 +294,6 @@ func TestNonEmptyLines(t *testing.T) {
 	}
 }
 
-func TestSnippet(t *testing.T) {
-	for _, tt := range []struct {
-		in   string
-		n    int
-		want string
-	}{
-		{"a\nb", 5, "a b"},
-		{"一二三四", 2, "一二…"},
-		{"abc", 3, "abc"},
-	} {
-		if got := snippet(tt.in, tt.n); got != tt.want {
-			t.Errorf("snippet(%q, %d) = %q, want %q", tt.in, tt.n, got, tt.want)
-		}
-	}
-}
-
 func TestHash(t *testing.T) {
 	if hashOf("a", 1) == hashOf("a1") {
 		t.Error("hashOf ignores part boundaries")

@@ -4,3 +4,8 @@
   white-space: pre-wrap !important;
   overflow-wrap: anywhere;
 }
+
+/* Space out the stats and download button in the top bar. */
+#toolbar_component_stats {
+  column-gap: 1.5rem !important;
+}
