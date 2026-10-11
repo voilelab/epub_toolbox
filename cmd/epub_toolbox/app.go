@@ -32,7 +32,6 @@ Source: [voilelab/epub_toolbox](https://github.com/voilelab/epub_toolbox)
 `+feedbackMarkdown()))
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "index", Title: tr("EPUB 工具箱", "EPUB Toolbox"), Emoji: "🧰"}, HomePage)
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "novel", Title: tr("小說 TXT 轉 EPUB", "Novel TXT to EPUB"), Emoji: "📘"}, NovelPage)
-	app.AddPageByConfig(&tgframe.PageConfig{Name: "regex", Title: tr("用正規表示式篩選章節標題", "Matching Chapter Titles with Regex"), Emoji: "📑"}, RegexPage)
 	app.AddPageByConfig(&tgframe.PageConfig{Name: "images", Title: tr("圖片轉 EPUB（實驗性）", "Images to EPUB (Experimental)"), Emoji: "🖼️"}, ImagesPage)
 	return app
 }
@@ -90,49 +89,57 @@ func toolCard(c *tgframe.Container, page, title, steps, badge string) {
 	tgcomp.PageLink(box, tr("開始製作 →", "Start →"), page, nil, &tgcomp.PageLinkConf{Base: tgframe.Base{ID: "start_" + page}})
 }
 
-func RegexPage(p *tgframe.Params) error {
-	if i18n.EN() {
-		return regexPageEN(p)
+// regexGuide draws a button that opens a dialog explaining title regexes.
+func regexGuide(c *tgframe.Container) {
+	d := tgcomp.Dialog(c, tr("📑 用正規表示式篩選章節標題", "📑 Matching Chapter Titles with Regex"), &tgcomp.DialogConf{Width: tgcomp.DialogWidthLarge})
+	if tgcomp.Button(c, tr("📑 如何用正規表示式篩選章節標題", "📑 How to match chapter titles with regex")) {
+		d.Open()
 	}
-	tgcomp.Title(p.Main, "📑 用正規表示式篩選章節標題")
-	tgcomp.Markdown(p.Main, "三分鐘帶你大概了解怎麼用正規表示式篩選小說章節標題……大概吧？\n\n"+
+	d.With(func(c *tgframe.Container) {
+		if i18n.EN() {
+			regexGuideEN(c)
+		} else {
+			regexGuideZH(c)
+		}
+	})
+}
+
+func regexGuideZH(c *tgframe.Container) {
+	tgcomp.Markdown(c, "三分鐘帶你大概了解怎麼用正規表示式篩選小說章節標題……大概吧？\n\n"+
 		"網路上不難找到正規表示式的詳細教學，"+
 		"但如果你只想知道哪些表示式會符合哪些章節標題，看這裡就好。\n\n"+
 		"表示式從一行的**開頭**開始符合時，該行就是標題。"+
 		"語法為 Go 的 [RE2](https://github.com/google/re2/wiki/Syntax)，"+
 		"因此不支援 lookahead 與反向參照。")
 
-	tgcomp.Subtitle(p.Main, "第.*章")
-	tgcomp.Text(p.Main, "這個表示式會符合：")
-	tgcomp.Code(p.Main, "第一章 開始\n第三十三章 你想不到吧\n第022章 結局", &tgcomp.CodeConf{Language: "text"})
-	tgcomp.Text(p.Main, "也就是任何以「第」開頭、後面接著出現「章」的行。")
+	tgcomp.Subtitle(c, "第.*章")
+	tgcomp.Text(c, "這個表示式會符合：")
+	tgcomp.Code(c, "第一章 開始\n第三十三章 你想不到吧\n第022章 結局", &tgcomp.CodeConf{Language: "text"})
+	tgcomp.Text(c, "也就是任何以「第」開頭、後面接著出現「章」的行。")
 
-	tgcomp.Subtitle(p.Main, `第\d+章`)
-	tgcomp.Text(p.Main, "這個表示式會符合：")
-	tgcomp.Code(p.Main, "第1章 開始\n第2345章 你想不到吧\n第022章 結局", &tgcomp.CodeConf{Language: "text"})
-	tgcomp.Text(p.Main, "但中間只要有非數字就不符合，所以這些不是標題：")
-	tgcomp.Code(p.Main, "第一章 開始\n第三十三章 你想不到吧", &tgcomp.CodeConf{Language: "text"})
-	return nil
+	tgcomp.Subtitle(c, `第\d+章`)
+	tgcomp.Text(c, "這個表示式會符合：")
+	tgcomp.Code(c, "第1章 開始\n第2345章 你想不到吧\n第022章 結局", &tgcomp.CodeConf{Language: "text"})
+	tgcomp.Text(c, "但中間只要有非數字就不符合，所以這些不是標題：")
+	tgcomp.Code(c, "第一章 開始\n第三十三章 你想不到吧", &tgcomp.CodeConf{Language: "text"})
 }
 
-func regexPageEN(p *tgframe.Params) error {
-	tgcomp.Title(p.Main, "📑 Matching Chapter Titles with Regex")
-	tgcomp.Markdown(p.Main, "A three-minute rough guide to matching novel chapter titles with regexes… roughly.\n\n"+
+func regexGuideEN(c *tgframe.Container) {
+	tgcomp.Markdown(c, "A three-minute rough guide to matching novel chapter titles with regexes… roughly.\n\n"+
 		"Detailed regex tutorials are easy to find online, "+
 		"but if you only want to know which expressions match which chapter titles, this is enough.\n\n"+
 		"A line is a title when the expression matches from its **start**. "+
 		"The syntax is Go's [RE2](https://github.com/google/re2/wiki/Syntax), "+
 		"so lookahead and backreferences are not supported.")
 
-	tgcomp.Subtitle(p.Main, "Chapter.*")
-	tgcomp.Text(p.Main, "This expression matches:")
-	tgcomp.Code(p.Main, "Chapter One: Beginning\nChapter 33 You Didn't See This Coming\nChapter022 The End", &tgcomp.CodeConf{Language: "text"})
-	tgcomp.Text(p.Main, "That is, any line starting with \"Chapter\".")
+	tgcomp.Subtitle(c, "Chapter.*")
+	tgcomp.Text(c, "This expression matches:")
+	tgcomp.Code(c, "Chapter One: Beginning\nChapter 33 You Didn't See This Coming\nChapter022 The End", &tgcomp.CodeConf{Language: "text"})
+	tgcomp.Text(c, "That is, any line starting with \"Chapter\".")
 
-	tgcomp.Subtitle(p.Main, `Chapter \d+`)
-	tgcomp.Text(p.Main, "This expression matches:")
-	tgcomp.Code(p.Main, "Chapter 1: Beginning\nChapter 2345 You Didn't See This Coming\nChapter 022 The End", &tgcomp.CodeConf{Language: "text"})
-	tgcomp.Text(p.Main, "But it needs a space then digits, so these are not titles:")
-	tgcomp.Code(p.Main, "Chapter One: Beginning\nChapter022 The End", &tgcomp.CodeConf{Language: "text"})
-	return nil
+	tgcomp.Subtitle(c, `Chapter \d+`)
+	tgcomp.Text(c, "This expression matches:")
+	tgcomp.Code(c, "Chapter 1: Beginning\nChapter 2345 You Didn't See This Coming\nChapter 022 The End", &tgcomp.CodeConf{Language: "text"})
+	tgcomp.Text(c, "But it needs a space then digits, so these are not titles:")
+	tgcomp.Code(c, "Chapter One: Beginning\nChapter022 The End", &tgcomp.CodeConf{Language: "text"})
 }

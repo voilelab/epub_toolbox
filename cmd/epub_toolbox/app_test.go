@@ -12,7 +12,7 @@ func TestPagesRender(t *testing.T) {
 	defer i18n.Set("zh-TW")
 	for _, lang := range []string{"zh-TW", "en"} {
 		i18n.Set(lang)
-		for _, page := range []string{"index", "novel", "regex", "images"} {
+		for _, page := range []string{"index", "novel", "images"} {
 			t.Run(lang+"/"+page, func(t *testing.T) { testPageRender(t, page) })
 		}
 	}

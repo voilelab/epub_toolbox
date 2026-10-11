@@ -33,7 +33,7 @@ func NovelPage(p *tgframe.Params) error {
 	file := tgcomp.FileUpload(bar, tr("選擇 txt 檔", "Choose a txt file"), ".txt,text/plain")
 	if file == nil {
 		tgcomp.MessageInfo(p.Main, tr("👆 請選擇要處理的文字檔。", "👆 Choose a text file to process."))
-		tgcomp.PageLink(p.Main, tr("📑 如何用正規表示式篩選章節標題", "📑 How to match chapter titles with regex"), "regex", nil)
+		regexGuide(p.Main)
 		return nil
 	}
 	raw, err := file.Bytes()
@@ -240,7 +240,7 @@ func chaptersTab(p *tgframe.Params, tab *tgframe.Container, lines []string, line
 		}
 	}
 
-	tgcomp.PageLink(c, tr("📑 如何用正規表示式篩選章節標題", "📑 How to match chapter titles with regex"), "regex", nil)
+	regexGuide(c)
 
 	rows := make([][]string, len(set.all))
 	for i, ch := range set.all {
