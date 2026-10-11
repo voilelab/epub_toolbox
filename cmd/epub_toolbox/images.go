@@ -21,12 +21,13 @@ func ImagesPage(p *tgframe.Params) error {
 		"🧪 This feature is experimental. Output may be unreliable; check the generated EPUB yourself."))
 	tgcomp.Text(p.Main, tr("將圖片打包成 EPUB，每頁一張圖。", "Pack images into an EPUB, one image per page."))
 
-	files := tgcomp.MultiFileUpload(p.Sidebar, tr("選擇圖片或 zip 檔", "Choose images or zip files"),
+	bar := tgcomp.Toolbar(p.Main)
+	files := tgcomp.MultiFileUpload(bar, tr("選擇圖片或 zip 檔", "Choose images or zip files"),
 		".zip,application/zip,.png,.jpg,.jpeg,.gif,.webp")
-	tgcomp.Caption(p.Sidebar, tr("PNG、JPEG、GIF 或 WebP，或其 zip 壓縮檔；頁面依檔名排序（2 在 10 之前）。",
+	tgcomp.Caption(p.Main, tr("PNG、JPEG、GIF 或 WebP，或其 zip 壓縮檔；頁面依檔名排序（2 在 10 之前）。",
 		"PNG, JPEG, GIF or WebP, or zip archives of them; pages are sorted by file name (2 before 10)."))
 	if files == nil {
-		tgcomp.MessageInfo(p.Main, tr("👈 請選擇圖片或圖片的 zip 壓縮檔。", "👈 Choose images or a zip archive of images."))
+		tgcomp.MessageInfo(p.Main, tr("👆 請選擇圖片或圖片的 zip 壓縮檔。", "👆 Choose images or a zip archive of images."))
 		return nil
 	}
 	picked := make([]imgbook.Image, len(files))
@@ -53,7 +54,8 @@ func ImagesPage(p *tgframe.Params) error {
 	if fresh {
 		tgcomp.Toast(p.Main, fmt.Sprintf(tr("已讀取 %d 張圖片", "Read %d images"), len(imgs)), &tgcomp.ToastConf{Icon: "🖼️"})
 	}
-	tgcomp.Text(p.Sidebar, tr("圖片數：", "Images: ")+strconv.Itoa(len(imgs)))
+	stats := tgcomp.Toolbar(p.Main)
+	tgcomp.Metric(stats, tr("圖片數", "Images"), strconv.Itoa(len(imgs)))
 
 	tabPreview, tabMeta := tgcomp.Tab2(p.Main, tr("圖片預覽", "Preview"), tr("書籍資訊", "Book Info"))
 
@@ -80,7 +82,7 @@ func ImagesPage(p *tgframe.Params) error {
 		firstAsCover = tgcomp.Checkbox(tabMeta, tr("以第一張圖片作為封面", "Use the first image as the cover"))
 	}
 
-	exportEpub(p, "images", meta.Title, func() ([]byte, error) {
+	exportEpub(stats, "images", meta.Title, func() ([]byte, error) {
 		cover, err := meta.cover()
 		if err != nil {
 			return nil, fmt.Errorf(tr("封面：%w", "cover: %w"), err)

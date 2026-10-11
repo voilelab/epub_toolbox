@@ -38,6 +38,20 @@ func hasAll(t *testing.T, p *tgtest.Page, want ...string) {
 	}
 }
 
+// hasMetrics reports each metric not matching want, given as label, value pairs.
+func hasMetrics(t *testing.T, p *tgtest.Page, want ...string) {
+	t.Helper()
+	got := map[string]string{}
+	for _, n := range p.FindByName("metric_component") {
+		got[n.String("label")] = n.String("value")
+	}
+	for i := 0; i+1 < len(want); i += 2 {
+		if v := got[want[i]]; v != want[i+1] {
+			t.Errorf("metric %q = %q, want %q", want[i], v, want[i+1])
+		}
+	}
+}
+
 // download clicks the download button and returns the built file.
 func download(t *testing.T, p *tgtest.Page) []byte {
 	t.Helper()
@@ -98,7 +112,8 @@ const novelText = "前言\n\n第一章 開始\n從前有座山。\n\n第二章 �
 
 func TestNovelPage(t *testing.T) {
 	p := openNovel(t, "我的書.TXT", novelText)
-	hasAll(t, p, "章節數：3", "行數：8", "第一章 開始", "下載 我的書.epub")
+	hasMetrics(t, p, "章節數", "3", "行數", "8")
+	hasAll(t, p, "第一章 開始", "下載 我的書.epub")
 
 	text := epubText(t, download(t, p))
 	for _, want := range []string{"<dc:title>我的書</dc:title>", "第一章 開始", "從前有座山。", "山上有座廟。"} {
@@ -115,7 +130,8 @@ func TestNovelPageOptions(t *testing.T) {
 	p.GetByLabel("左右對齊").Input(true)
 	p.GetByLabel("封面").Upload("c.png", pngBytes(t))
 
-	hasAll(t, p, "行數：5", "已自訂（以「中文橫排」為基礎）。")
+	hasMetrics(t, p, "行數", "5")
+	hasAll(t, p, "已自訂（以「中文橫排」為基礎）。")
 	text := epubText(t, download(t, p))
 	if !strings.Contains(text, "text-align: justify;") || !strings.Contains(text, "EPUB/cover.xhtml") {
 		t.Error("epub misses style or cover")
@@ -160,7 +176,8 @@ func TestNovelPageDetect(t *testing.T) {
 		sb.WriteString("【" + n + "】\n\n內文。\n內文。\n內文。\n\n")
 	}
 	p := openNovel(t, "a.txt", sb.String())
-	hasAll(t, p, "章節數：6", "已依本書內容自動偵測標題格式", "【五】")
+	hasMetrics(t, p, "章節數", "6")
+	hasAll(t, p, "已依本書內容自動偵測標題格式", "【五】")
 
 	// Confidence sorts as a number but shows as a percentage.
 	sugs := p.Get("dataframe_component_suggestions").Prop("rows").([]any)
@@ -171,7 +188,8 @@ func TestNovelPageDetect(t *testing.T) {
 
 	// A new file resets the allowlist to its own default.
 	p.GetByLabel("選擇 txt 檔").Upload("b.txt", []byte(novelText))
-	hasAll(t, p, "章節數：3", "無法確定本書的標題格式")
+	hasMetrics(t, p, "章節數", "3")
+	hasAll(t, p, "無法確定本書的標題格式")
 }
 
 func TestNovelPageInvalidRegex(t *testing.T) {
@@ -220,7 +238,8 @@ func TestNovelPageEN(t *testing.T) {
 	i18n.Set("en")
 	defer i18n.Set("zh-TW")
 	p := openWith(t, "novel", "Choose a txt file", "a.txt", []byte("Intro\nChapter 1\nHello\n"))
-	hasAll(t, p, "Chapters: 2", "No body styling; the reader app decides.")
+	hasMetrics(t, p, "Chapters", "2")
+	hasAll(t, p, "No body styling; the reader app decides.")
 }
 
 func TestImagesPage(t *testing.T) {
@@ -235,7 +254,8 @@ func TestImagesPage(t *testing.T) {
 
 	p := openWith(t, "images", "選擇圖片或 zip 檔", "漫畫.zip", zbuf.Bytes())
 	p.GetByLabel("以第一張圖片作為封面").Input(true)
-	hasAll(t, p, "圖片數：2", "1. 2.png", "下載 漫畫.epub")
+	hasMetrics(t, p, "圖片數", "2")
+	hasAll(t, p, "1. 2.png", "下載 漫畫.epub")
 
 	text := epubText(t, download(t, p))
 	if !strings.Contains(text, "<dc:title>漫畫</dc:title>") || !strings.Contains(text, "EPUB/cover.xhtml") {
@@ -249,7 +269,8 @@ func TestImagesPageFiles(t *testing.T) {
 	p.GetByLabel("選擇圖片或 zip 檔").UploadFiles(tgtest.File{Name: "b.png", Body: img}, tgtest.File{Name: "a.png", Body: img})
 	p.GetByLabel("封面").Upload("c.png", img)
 
-	hasAll(t, p, "圖片數：2", "下載 book.epub")
+	hasMetrics(t, p, "圖片數", "2")
+	hasAll(t, p, "下載 book.epub")
 	if p.HasText("以第一張圖片作為封面") {
 		t.Error("first-as-cover offered with a cover")
 	}

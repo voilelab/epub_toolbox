@@ -26,9 +26,11 @@ func NovelPage(p *tgframe.Params) error {
 	tgcomp.Title(p.Main, tr("📘 小說 TXT 轉 EPUB", "📘 Novel TXT to EPUB"))
 	tgcomp.Text(p.Main, tr("將小說純文字檔切分成章節並製作成 EPUB。", "Split a plain-text novel into chapters and make an EPUB."))
 
-	file := tgcomp.FileUpload(p.Sidebar, tr("選擇 txt 檔", "Choose a txt file"), ".txt,text/plain")
+	// Top bars: inputs, then stats and download (filled after the tabs).
+	bar := tgcomp.Toolbar(p.Main)
+	file := tgcomp.FileUpload(bar, tr("選擇 txt 檔", "Choose a txt file"), ".txt,text/plain")
 	if file == nil {
-		tgcomp.MessageInfo(p.Main, tr("👈 請選擇要處理的文字檔。", "👈 Choose a text file to process."))
+		tgcomp.MessageInfo(p.Main, tr("👆 請選擇要處理的文字檔。", "👆 Choose a text file to process."))
 		tgcomp.PageLink(p.Main, tr("📑 如何用正規表示式篩選章節標題", "📑 How to match chapter titles with regex"), "regex", nil)
 		return nil
 	}
@@ -39,14 +41,15 @@ func NovelPage(p *tgframe.Params) error {
 	fileKey := hashBytes(raw)
 
 	encs := memo(p.State, "encodings", fileKey, func() []string { return novel.Encodings(raw) })
-	encIdx := tgcomp.Select(p.Sidebar, tr("編碼", "Encoding"), encs, (&tgcomp.SelectConf{
+	encIdx := tgcomp.Select(bar, tr("編碼", "Encoding"), encs, (&tgcomp.SelectConf{
 		Base: tgframe.Base{ID: "encoding_" + fileKey},
 	}).SetDefault(0))
 	if encIdx == nil {
 		return nil
 	}
 	enc := encs[*encIdx]
-	removeEmptyLines := tgcomp.Checkbox(p.Sidebar, tr("移除空行", "Remove empty lines"))
+	removeEmptyLines := tgcomp.Checkbox(bar, tr("移除空行", "Remove empty lines"))
+	stats := tgcomp.Toolbar(p.Main)
 
 	text := memo(p.State, "text", fileKey+enc, func() string { return novel.Decode(raw, enc) })
 	lines := memo(p.State, "lines", hashOf(fileKey, enc, removeEmptyLines), func() []string {
@@ -68,17 +71,16 @@ func NovelPage(p *tgframe.Params) error {
 		return nil
 	}
 
-	tgcomp.Text(p.Sidebar, tr("編碼：", "Encoding: ")+enc)
-	tgcomp.Text(p.Sidebar, tr("行數：", "Lines: ")+strconv.Itoa(len(lines)))
-	tgcomp.Text(p.Sidebar, tr("字數：", "Characters: ")+strconv.Itoa(utf8.RuneCountInString(text)))
-	tgcomp.Text(p.Sidebar, tr("章節數：", "Chapters: ")+strconv.Itoa(len(chapters.all)))
+	tgcomp.Metric(stats, tr("行數", "Lines"), strconv.Itoa(len(lines)))
+	tgcomp.Metric(stats, tr("字數", "Characters"), strconv.Itoa(utf8.RuneCountInString(text)))
+	tgcomp.Metric(stats, tr("章節數", "Chapters"), strconv.Itoa(len(chapters.all)))
 
 	defTitle, _ := cutExt(file.Name, ".txt")
 	defIntro := strings.TrimSpace(chapters.head.Content(longChapter))
 	meta := metaForm(tabMeta, fileKey, defTitle, defIntro)
 	style := styleForm(tabStyle)
 
-	exportEpub(p, "novel", meta.Title, func() ([]byte, error) {
+	exportEpub(stats, "novel", meta.Title, func() ([]byte, error) {
 		cover, err := meta.cover()
 		if err != nil {
 			return nil, fmt.Errorf(tr("封面：%w", "cover: %w"), err)
