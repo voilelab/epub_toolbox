@@ -159,6 +159,25 @@ func TestNovelPageCustomCSS(t *testing.T) {
 	}
 }
 
+func TestNovelPageStylePreview(t *testing.T) {
+	p := openNovel(t, "a.txt", novelText)
+	if len(p.FindByName("iframe_component")) != 0 {
+		t.Fatal("preview shown before opening")
+	}
+	p.GetByLabel("左右對齊").Input(true)
+	p.Find(func(n *tgtest.Node) bool { return n.String("label") == "👁 預覽樣式" })[0].Click()
+	f := p.FindByName("iframe_component")
+	if len(f) != 1 {
+		t.Fatalf("%d preview iframes", len(f))
+	}
+	html := f[0].String("html")
+	for _, w := range []string{"<h1>第一章 開始</h1>", "<p>從前有座山。</p>", "text-align: justify;"} {
+		if !strings.Contains(html, w) {
+			t.Errorf("preview missing %q", w)
+		}
+	}
+}
+
 func TestHomePageLinks(t *testing.T) {
 	p := tgtest.Open(t, newApp(), "index")
 	var pages []string

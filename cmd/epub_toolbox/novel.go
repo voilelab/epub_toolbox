@@ -18,6 +18,8 @@ const (
 	longChapter = 500
 	// Lines shown in the chapter preview.
 	previewLines = 1000
+	// Lines shown in the style preview.
+	stylePreviewLines = 30
 	// Detected patterns at or above this score replace the default allowlist.
 	suggestScore = 0.5
 )
@@ -78,7 +80,7 @@ func NovelPage(p *tgframe.Params) error {
 	defTitle, _ := cutExt(file.Name, ".txt")
 	defIntro := strings.TrimSpace(chapters.head.Content(longChapter))
 	meta := metaForm(tabMeta, fileKey, defTitle, defIntro)
-	style := styleForm(tabStyle)
+	style := styleForm(tabStyle, meta.Language, sampleChapter(chapters.all))
 
 	exportEpub(stats, "novel", meta.Title, func() ([]byte, error) {
 		cover, err := meta.cover()
@@ -94,7 +96,7 @@ func NovelPage(p *tgframe.Params) error {
 	return nil
 }
 
-func styleForm(c *tgframe.Container) novel.Style {
+func styleForm(c *tgframe.Container, lang string, sample novel.Chapter) novel.Style {
 	names := make([]string, len(novel.Templates))
 	for i, t := range novel.Templates {
 		names[i] = t.Name()
@@ -124,6 +126,7 @@ func styleForm(c *tgframe.Container) novel.Style {
 		Vertical:    box(tr("直排（向左翻頁）", "Vertical (pages turn left)"), d.Vertical),
 	}
 	tgcomp.Caption(c, tr("字體、字級與顏色交給閱讀器設定。", "Font, size and colors are left to the reader app."))
+	previewBtn := tgcomp.Column1(c) // filled once the CSS is known
 
 	adv := tgcomp.Expand(c, tr("進階：CSS", "Advanced: CSS"), false)
 	s.Extra = tgcomp.CodeInput(adv, tr("自訂 CSS", "Custom CSS"), &tgcomp.CodeInputConf{
@@ -141,7 +144,45 @@ func styleForm(c *tgframe.Container) novel.Style {
 
 	tgcomp.Caption(adv, tr("書中使用的 CSS：", "CSS used in the book:"))
 	tgcomp.Code(adv, s.CSS(), &tgcomp.CodeConf{Language: "css"})
+
+	stylePreview(c, previewBtn, s, lang, sample)
 	return s
+}
+
+// stylePreview draws a button in btn that opens a dialog showing sample with s.
+func stylePreview(c, btn *tgframe.Container, s novel.Style, lang string, sample novel.Chapter) {
+	d := tgcomp.Dialog(c, tr("樣式預覽", "Style preview"), &tgcomp.DialogConf{Width: tgcomp.DialogWidthLarge})
+	if tgcomp.Button(btn, tr("👁 預覽樣式", "👁 Preview style")) {
+		d.Open()
+	}
+	d.With(func(c *tgframe.Container) {
+		title := sample.Title
+		if sample.Head {
+			title = tr("開頭", "Opening")
+		}
+		lines := sample.Lines
+		if len(lines) > stylePreviewLines {
+			lines = lines[:stylePreviewLines]
+		}
+		tgcomp.Iframe(c, s.PreviewHTML(lang, title, lines), &tgcomp.IframeConf{
+			Base: tgframe.Base{ID: "style_preview"}, Height: "60vh",
+		})
+		tgcomp.Caption(c, fmt.Sprintf(tr("以「%s」的前 %d 行示意；實際字體與邊距依閱讀器而定。",
+			"The first %[2]d lines of %[1]s; the actual font and margins depend on the reader app."), title, len(lines)))
+	})
+}
+
+// sampleChapter picks the first titled chapter with text for the style preview.
+func sampleChapter(chs []novel.Chapter) novel.Chapter {
+	for _, ch := range chs {
+		if !ch.Head && len(ch.Lines) > 0 {
+			return ch
+		}
+	}
+	if len(chs) == 0 {
+		return novel.Chapter{Head: true}
+	}
+	return chs[0]
 }
 
 type chapterSet struct {

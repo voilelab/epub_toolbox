@@ -3,6 +3,7 @@ package novel
 import (
 	"strings"
 
+	"github.com/voilelab/epub_toolbox/internal/epub"
 	"github.com/voilelab/epub_toolbox/internal/i18n"
 )
 
@@ -121,3 +122,23 @@ func rule(sb *strings.Builder, sel string, decls []string) {
 const baseCSS = `.cover { text-align: center; }
 .cover img { max-width: 100%; max-height: 100vh; }
 `
+
+// PreviewHTML is a standalone page showing a chapter with s, for the style preview.
+func (s Style) PreviewHTML(lang, title string, lines []string) string {
+	css := strings.ReplaceAll(s.CSS(), "</", `<\/`) // keep custom CSS inside <style>
+	return `<!DOCTYPE html>
+<html lang="` + epub.Escape(lang) + `">
+<head>
+<meta charset="utf-8">
+<style>
+:root { color-scheme: light; }
+body { margin: 1.5em; font-family: serif; line-height: 1.6; }
+</style>
+<style>
+` + css + `</style>
+</head>
+<body>
+<h1>` + epub.Escape(title) + "</h1>\n" + epub.Paragraphs(lines) + `</body>
+</html>
+`
+}
