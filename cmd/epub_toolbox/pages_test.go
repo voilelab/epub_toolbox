@@ -144,10 +144,19 @@ func TestNovelPageOptions(t *testing.T) {
 	}
 }
 
-func TestNovelPageRegexLink(t *testing.T) {
-	p := tgtest.Open(t, newApp(), "novel")
-	if l := p.FindByName("page_link_component"); len(l) != 1 || l[0].String("page") != "regex" {
-		t.Error("no regex guide link before a file is chosen")
+func TestNovelPageRegexGuide(t *testing.T) {
+	defer i18n.Set("zh-TW")
+	for _, lang := range []string{"zh-TW", "en"} {
+		i18n.Set(lang)
+		p := tgtest.Open(t, newApp(), "novel")
+		btns := p.Find(func(n *tgtest.Node) bool {
+			return n.String("label") == tr("📑 如何用正規表示式篩選章節標題", "📑 How to match chapter titles with regex")
+		})
+		if len(btns) != 1 {
+			t.Fatalf("%s: %d regex guide buttons before a file is chosen", lang, len(btns))
+		}
+		btns[0].Click()
+		hasAll(t, p, tr("這個表示式會符合：", "This expression matches:"))
 	}
 }
 
