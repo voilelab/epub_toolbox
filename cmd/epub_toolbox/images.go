@@ -24,10 +24,9 @@ func ImagesPage(p *tgframe.Params) error {
 	bar := tgcomp.Toolbar(p.Main)
 	files := tgcomp.MultiFileUpload(bar, tr("選擇圖片或 zip 檔", "Choose images or zip files"),
 		".zip,application/zip,.png,.jpg,.jpeg,.gif,.webp")
-	tgcomp.Caption(p.Main, tr("PNG、JPEG、GIF 或 WebP，或其 zip 壓縮檔；頁面依檔名排序（2 在 10 之前）。",
-		"PNG, JPEG, GIF or WebP, or zip archives of them; pages are sorted by file name (2 before 10)."))
 	if files == nil {
-		tgcomp.MessageInfo(p.Main, tr("👆 請選擇圖片或圖片的 zip 壓縮檔。", "👆 Choose images or a zip archive of images."))
+		tgcomp.MessageInfo(p.Main, tr("👆 請選擇圖片（PNG、JPEG、GIF 或 WebP）或其 zip 壓縮檔。",
+			"👆 Choose images (PNG, JPEG, GIF or WebP) or zip archives of them."))
 		return nil
 	}
 	picked := make([]imgbook.Image, len(files))
@@ -54,7 +53,7 @@ func ImagesPage(p *tgframe.Params) error {
 	if fresh {
 		tgcomp.Toast(p.Main, fmt.Sprintf(tr("已讀取 %d 張圖片", "Read %d images"), len(imgs)), &tgcomp.ToastConf{Icon: "🖼️"})
 	}
-	stats := tgcomp.Toolbar(p.Main)
+	stats := tgcomp.Toolbar(p.Main, &tgcomp.ToolbarConf{Base: tgframe.Base{ID: "stats"}})
 	tgcomp.Metric(stats, tr("圖片數", "Images"), strconv.Itoa(len(imgs)))
 
 	tabPreview, tabMeta := tgcomp.Tab2(p.Main, tr("圖片預覽", "Preview"), tr("書籍資訊", "Book Info"))
@@ -66,6 +65,7 @@ func ImagesPage(p *tgframe.Params) error {
 	if idx := tgcomp.Select(tabPreview, tr("檔名", "File"), names, (&tgcomp.SelectConf{
 		Base: tgframe.Base{ID: "image_" + fileKey},
 	}).SetDefault(0)); idx != nil {
+		tgcomp.Caption(tabPreview, tr("頁面依檔名排序（2 在 10 之前）。", "Pages are sorted by file name (2 before 10)."))
 		tgcomp.Image(tabPreview, imgs[*idx].Data, &tgcomp.ImageConf{Width: "360px"})
 	}
 

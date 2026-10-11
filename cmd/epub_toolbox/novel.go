@@ -49,7 +49,7 @@ func NovelPage(p *tgframe.Params) error {
 	}
 	enc := encs[*encIdx]
 	removeEmptyLines := tgcomp.Checkbox(bar, tr("移除空行", "Remove empty lines"))
-	stats := tgcomp.Toolbar(p.Main)
+	stats := tgcomp.Toolbar(p.Main, &tgcomp.ToolbarConf{Base: tgframe.Base{ID: "stats"}})
 
 	text := memo(p.State, "text", fileKey+enc, func() string { return novel.Decode(raw, enc) })
 	lines := memo(p.State, "lines", hashOf(fileKey, enc, removeEmptyLines), func() []string {
@@ -151,7 +151,9 @@ type chapterSet struct {
 	keepHead bool
 }
 
-func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesKey, textKey string, sugs []novel.Suggestion) (chapterSet, bool) {
+func chaptersTab(p *tgframe.Params, tab *tgframe.Container, lines []string, linesKey, textKey string, sugs []novel.Suggestion) (chapterSet, bool) {
+	// Rules on the left, the resulting chapters on the right.
+	c, out := tgcomp.EqColumn2(tab, &tgcomp.ColumnConf{Base: tgframe.Base{ID: "chapters_tab"}})
 	defAllow := tr("第.*章.*", "Chapter.*")
 	detected := len(sugs) > 0 && sugs[0].Score >= suggestScore
 	if detected {
@@ -197,11 +199,13 @@ func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesK
 		}
 	}
 
+	tgcomp.PageLink(c, tr("📑 如何用正規表示式篩選章節標題", "📑 How to match chapter titles with regex"), "regex", nil)
+
 	rows := make([][]string, len(set.all))
 	for i, ch := range set.all {
-		rows[i] = []string{strconv.Itoa(i), ch.Title, strconv.Itoa(len(ch.Lines)), snippet(ch.Content(3), 60)}
+		rows[i] = []string{strconv.Itoa(i), ch.Title, strconv.Itoa(len(ch.Lines))}
 	}
-	sel := tgcomp.DataFrame(c, []string{tr("編號", "No."), tr("標題", "Title"), tr("行數", "Lines"), tr("內容", "Content")}, rows, &tgcomp.DataFrameConf{
+	sel := tgcomp.DataFrame(out, []string{tr("編號", "No."), tr("標題", "Title"), tr("行數", "Lines")}, rows, &tgcomp.DataFrameConf{
 		Base:             tgframe.Base{ID: "chapters"},
 		PageSize:         10,
 		Selection:        tgcomp.SelectionModeSingle,
@@ -210,19 +214,18 @@ func chaptersTab(p *tgframe.Params, c *tgframe.Container, lines []string, linesK
 			{Type: tgcomp.ColumnTypeNumber, Width: "5rem"},
 			{},
 			{Type: tgcomp.ColumnTypeNumber, Width: "5rem"},
-			{},
 		},
 	})
-	tgcomp.Caption(c, tr("選擇一列以預覽章節。", "Select a row to preview the chapter."))
+	tgcomp.Caption(out, tr("選擇一列以預覽章節。", "Select a row to preview the chapter."))
 
 	if slices.ContainsFunc(set.all, func(ch novel.Chapter) bool { return len(ch.Lines) > longChapter }) {
-		tgcomp.MessageWarning(c, fmt.Sprintf(tr("部分章節超過 %d 行，標題正規表示式可能有誤。",
+		tgcomp.MessageWarning(out, fmt.Sprintf(tr("部分章節超過 %d 行，標題正規表示式可能有誤。",
 			"Some chapters exceed %d lines; the title regex may be wrong."), longChapter))
 	}
 
 	if len(sel) > 0 && sel[0] < len(set.all) {
 		ch := set.all[sel[0]]
-		exp := tgcomp.Expand(c, tr("預覽：", "Preview: ")+ch.Title, true)
+		exp := tgcomp.Expand(out, tr("預覽：", "Preview: ")+ch.Title, true)
 		if len(ch.Lines) > previewLines {
 			tgcomp.Caption(exp, fmt.Sprintf(tr("顯示前 %d 行，共 %d 行。", "Showing the first %d of %d lines."), previewLines, len(ch.Lines)))
 		}
@@ -281,12 +284,4 @@ func nonEmptyLines(s string) []string {
 		}
 	}
 	return out
-}
-
-func snippet(s string, n int) string {
-	s = strings.ReplaceAll(s, "\n", " ")
-	if utf8.RuneCountInString(s) <= n {
-		return s
-	}
-	return string([]rune(s)[:n]) + "…"
 }
