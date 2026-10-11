@@ -4,3 +4,10 @@
   white-space: pre-wrap !important;
   overflow-wrap: anywhere;
 }
+
+/* The file bar wraps to several rows on phones; pinned, it would cover the page. Matches toolgui's 768px breakpoint. */
+@media screen and (max-width: 768px) {
+  #toolbar_component_file_bar.is-sticky {
+    position: static;
+  }
+}
