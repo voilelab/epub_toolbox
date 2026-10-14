@@ -1,3 +1,4 @@
 dist/
 .vscode
 cover.out
+/cmd/epub_toolbox/epub_toolbox
