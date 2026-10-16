@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/voilelab/epub_toolbox/internal/epub"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/encoding/traditionalchinese"
 )
@@ -92,7 +93,7 @@ func TestBuild(t *testing.T) {
 		{Title: "第一章", Lines: []string{"a"}},
 		{Title: "第二章", Lines: []string{"b"}},
 	}
-	data, err := Build(Meta{Title: "書", Intro: "簡介"}, chs)
+	data, err := Build(&epub.Book{Title: "書"}, chs, Style{}, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,9 +107,9 @@ func TestBuild(t *testing.T) {
 			secs++
 		}
 	}
-	// intro + 2 chapters, head skipped
-	if secs != 3 {
-		t.Errorf("sections = %d, want 3", secs)
+	// head skipped
+	if secs != 2 {
+		t.Errorf("sections = %d, want 2", secs)
 	}
 }
 
@@ -116,7 +117,7 @@ func TestBuildStyle(t *testing.T) {
 	chs := []Chapter{{Title: "第一章", Lines: []string{"a"}}}
 	for _, tp := range Templates {
 		s := tp.Style()
-		data, err := Build(Meta{Title: "書", Style: s}, chs)
+		data, err := Build(&epub.Book{Title: "書"}, chs, s, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -155,7 +156,7 @@ func TestBuildKeepHead(t *testing.T) {
 		{Title: HeadTitle(), Head: true, Lines: []string{"head"}},
 		{Title: "第一章", Lines: []string{"a"}},
 	}
-	data, err := Build(Meta{Title: "書", KeepHead: true}, chs)
+	data, err := Build(&epub.Book{Title: "書"}, chs, Style{}, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -165,7 +166,7 @@ func TestBuildKeepHead(t *testing.T) {
 }
 
 func TestBuildEmpty(t *testing.T) {
-	_, err := Build(Meta{Title: "書"}, []Chapter{{Title: HeadTitle(), Head: true, Lines: []string{"x"}}})
+	_, err := Build(&epub.Book{Title: "書"}, []Chapter{{Title: HeadTitle(), Head: true, Lines: []string{"x"}}}, Style{}, false)
 	if err == nil {
 		t.Error("want error")
 	}

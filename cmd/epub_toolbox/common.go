@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/voilelab/epub_toolbox/internal/epub"
 	"github.com/voilelab/epub_toolbox/internal/i18n"
 	"github.com/voilelab/toolgui/toolgui/tgcomp"
 	"github.com/voilelab/toolgui/toolgui/tgcomp/tcutil"
@@ -32,12 +33,22 @@ type bookMeta struct {
 	coverFile *tgcomp.FileObject
 }
 
-// cover reads the uploaded cover, or returns nil if none.
-func (m bookMeta) cover() ([]byte, error) {
-	if m.coverFile == nil {
-		return nil, nil
+// book starts an EPUB with m, its cover and an intro section.
+func (m bookMeta) book() (*epub.Book, error) {
+	b := &epub.Book{Title: m.Title, Author: m.Author, Description: m.Intro, Language: m.Language}
+	if m.coverFile != nil {
+		data, err := m.coverFile.Bytes()
+		if err == nil {
+			err = b.SetCover(data)
+		}
+		if err != nil {
+			return nil, fmt.Errorf(tr("封面：%w", "cover: %w"), err)
+		}
 	}
-	return m.coverFile.Bytes()
+	if m.Intro != "" {
+		b.AddSection(tr("簡介", "Introduction"), epub.Paragraphs(strings.Split(m.Intro, "\n")))
+	}
+	return b, nil
 }
 
 // metaForm draws the metadata inputs. resetKey resets them for a new input file.

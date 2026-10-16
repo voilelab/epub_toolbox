@@ -83,15 +83,11 @@ func NovelPage(p *tgframe.Params) error {
 	style := styleForm(tabStyle, meta.Language, sampleChapter(chapters.all))
 
 	exportEpub(stats, "novel", meta.Title, func() ([]byte, error) {
-		cover, err := meta.cover()
+		b, err := meta.book()
 		if err != nil {
-			return nil, fmt.Errorf(tr("封面：%w", "cover: %w"), err)
+			return nil, err
 		}
-		return novel.Build(novel.Meta{
-			Title: meta.Title, Author: meta.Author, Intro: meta.Intro,
-			Language: meta.Language, Cover: cover, Style: style,
-			KeepHead: chapters.keepHead,
-		}, chapters.all)
+		return novel.Build(b, chapters.all, style, chapters.keepHead)
 	})
 	return nil
 }

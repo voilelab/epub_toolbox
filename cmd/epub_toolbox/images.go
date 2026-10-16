@@ -77,17 +77,16 @@ func ImagesPage(p *tgframe.Params) error {
 	}
 
 	exportEpub(stats, "images", meta.Title, func() ([]byte, error) {
-		cover, err := meta.cover()
+		b, err := meta.book()
 		if err != nil {
-			return nil, fmt.Errorf(tr("封面：%w", "cover: %w"), err)
+			return nil, err
 		}
 		if firstAsCover {
-			cover = imgs[0].Data
+			if err := b.SetCover(imgs[0].Data); err != nil {
+				return nil, err
+			}
 		}
-		return imgbook.Build(imgbook.Meta{
-			Title: meta.Title, Author: meta.Author, Intro: meta.Intro,
-			Language: meta.Language, Cover: cover,
-		}, imgs)
+		return imgbook.Build(b, imgs)
 	})
 	return nil
 }
