@@ -125,29 +125,9 @@ func digits(s string) int {
 	return i
 }
 
-// Meta is the book metadata.
-type Meta struct {
-	Title, Author, Intro, Language string
-	Cover                          []byte
-}
-
-// Build builds an EPUB with one page per image.
-func Build(meta Meta, imgs []Image) ([]byte, error) {
-	b := &epub.Book{
-		Title:       meta.Title,
-		Author:      meta.Author,
-		Description: meta.Intro,
-		Language:    meta.Language,
-		CSS:         css,
-	}
-	if len(meta.Cover) > 0 {
-		if err := b.SetCover(meta.Cover); err != nil {
-			return nil, err
-		}
-	}
-	if meta.Intro != "" {
-		b.AddSection(i18n.T("簡介", "Introduction"), epub.Paragraphs(strings.Split(meta.Intro, "\n")))
-	}
+// Build adds one page per image to b and returns the EPUB.
+func Build(b *epub.Book, imgs []Image) ([]byte, error) {
+	b.CSS = css
 	for i, img := range imgs {
 		href, err := b.AddImage(img.Data)
 		if err != nil {

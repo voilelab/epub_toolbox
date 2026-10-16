@@ -330,10 +330,17 @@ func TestHash(t *testing.T) {
 	}
 }
 
-func TestBookMetaNoCover(t *testing.T) {
-	m := bookMeta{}
-	if b, err := m.cover(); b != nil || err != nil {
-		t.Errorf("cover = %v, %v", b, err)
+func TestBookMetaBook(t *testing.T) {
+	b, err := bookMeta{Title: "t", Intro: "a\nb"}.book()
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := b.Bytes()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(data, []byte("sec_00001.xhtml")) || bytes.Contains(data, []byte("cover.xhtml")) {
+		t.Error("want an intro section and no cover")
 	}
 }
 

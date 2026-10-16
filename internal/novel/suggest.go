@@ -43,27 +43,27 @@ func Suggest(lines []string) []Suggestion {
 		n    int
 		nums string // numeral runes seen
 	}
-	shapes := map[string]*stat{}
+	shapes := map[shape]*stat{}
 	for _, l := range lines {
-		k, nums, ok := shapeOf(l)
+		sh, nums, ok := shapeOf(l)
 		if !ok {
 			continue
 		}
-		st := shapes[k]
+		st := shapes[sh]
 		if st == nil {
 			st = &stat{}
-			shapes[k] = st
+			shapes[sh] = st
 		}
 		st.n++
 		st.nums += nums
 	}
 
 	var out []Suggestion
-	for k, st := range shapes {
+	for sh, st := range shapes {
 		if st.n < minCount {
 			continue
 		}
-		if s, ok := score(lines, k, numClass(st.nums)); ok {
+		if s, ok := score(lines, sh, numClass(st.nums)); ok {
 			out = append(out, s)
 		}
 	}
@@ -88,34 +88,22 @@ type shape struct {
 	mark   rune // 0 if none
 }
 
-// key encodes s as prefix + "\x00" + mark.
-func (s shape) key() string { return s.prefix + "\x00" + string(s.mark) }
-
-func parseKey(k string) shape {
-	p, m, _ := strings.Cut(k, "\x00")
-	r, _ := utf8.DecodeRuneInString(m)
-	if m == "" {
-		r = 0
-	}
-	return shape{p, r}
-}
-
-// shapeOf returns the shape key of a title-like line and its numeral runes.
-func shapeOf(line string) (key, nums string, ok bool) {
+// shapeOf returns the shape of a title-like line and its numeral runes.
+func shapeOf(line string) (s shape, nums string, ok bool) {
 	t := trimSpace(line)
 	if t == "" || utf8.RuneCountInString(t) > maxTitleLen {
-		return "", "", false
+		return shape{}, "", false
 	}
 	rs := []rune(t)
 	i := 0
 	for i < len(rs) && !isNum(rs[i]) {
 		if isEndPunct(rs[i]) {
-			return "", "", false
+			return shape{}, "", false
 		}
 		i++
 	}
 	if i == len(rs) || i > maxPrefixLen {
-		return "", "", false
+		return shape{}, "", false
 	}
 	prefix := string(rs[:i])
 	start := i
@@ -123,15 +111,15 @@ func shapeOf(line string) (key, nums string, ok bool) {
 		i++
 	}
 	nums = string(rs[start:i])
-	s := shape{prefix: prefix}
+	s = shape{prefix: prefix}
 	if i < len(rs) && strings.ContainsRune(titleMarks, rs[i]) {
 		s.mark = rs[i]
 	}
 	// A bare number must stand alone, or "一個人…" would be a title.
 	if prefix == "" && s.mark == 0 && i < len(rs) && !isSpace(rs[i]) {
-		return "", "", false
+		return shape{}, "", false
 	}
-	return s.key(), nums, true
+	return s, nums, true
 }
 
 // numClass returns a regex matching numbers made of the runes in nums.
@@ -171,8 +159,7 @@ func (s shape) pattern(num string) string {
 }
 
 // score runs the shape's pattern over lines and rates the split.
-func score(lines []string, k, num string) (Suggestion, bool) {
-	sh := parseKey(k)
+func score(lines []string, sh shape, num string) (Suggestion, bool) {
 	main := sh.pattern(num)
 	re := regexp.MustCompile("^(?:" + main + ")")
 

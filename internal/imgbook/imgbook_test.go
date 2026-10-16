@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"slices"
 	"testing"
+
+	"github.com/voilelab/epub_toolbox/internal/epub"
 )
 
 const png = "\x89PNG\r\n\x1a\n"
@@ -70,7 +72,11 @@ func TestNaturalCompare(t *testing.T) {
 }
 
 func TestBuild(t *testing.T) {
-	data, err := Build(Meta{Title: "t", Cover: []byte(png)}, []Image{{"a.png", []byte(png)}})
+	b := &epub.Book{Title: "t"}
+	if err := b.SetCover([]byte(png)); err != nil {
+		t.Fatal(err)
+	}
+	data, err := Build(b, []Image{{"a.png", []byte(png)}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +94,7 @@ func TestBuild(t *testing.T) {
 		}
 	}
 
-	if _, err := Build(Meta{}, []Image{{"bad", []byte("x")}}); err == nil {
+	if _, err := Build(&epub.Book{}, []Image{{"bad", []byte("x")}}); err == nil {
 		t.Error("want error for non-image")
 	}
 }

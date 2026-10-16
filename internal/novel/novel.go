@@ -105,36 +105,15 @@ func RemoveEmpty(chs []Chapter) []Chapter {
 	return out
 }
 
-// Meta is the book metadata.
-type Meta struct {
-	Title, Author, Intro, Language string
-	Cover                          []byte
-	Style                          Style
-	KeepHead                       bool // include the head chapter
-}
-
-// Build builds an EPUB from the chapters, skipping the head unless meta.KeepHead.
-func Build(meta Meta, chs []Chapter) ([]byte, error) {
-	b := &epub.Book{
-		Title:       meta.Title,
-		Author:      meta.Author,
-		Description: meta.Intro,
-		Language:    meta.Language,
-		CSS:         meta.Style.CSS(),
-		WritingMode: meta.Style.WritingMode(),
-	}
-	if len(meta.Cover) > 0 {
-		if err := b.SetCover(meta.Cover); err != nil {
-			return nil, err
-		}
-	}
-	if meta.Intro != "" {
-		b.AddSection(i18n.T("簡介", "Introduction"), epub.Paragraphs(strings.Split(meta.Intro, "\n")))
-	}
+// Build adds the chapters to b with style s and returns the EPUB.
+// The head chapter is skipped unless keepHead.
+func Build(b *epub.Book, chs []Chapter, s Style, keepHead bool) ([]byte, error) {
+	b.CSS = s.CSS()
+	b.WritingMode = s.WritingMode()
 	for _, c := range chs {
 		title := c.Title
 		if c.Head {
-			if !meta.KeepHead {
+			if !keepHead {
 				continue
 			}
 			title = i18n.T("開頭", "Opening")
