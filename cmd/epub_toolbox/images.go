@@ -10,11 +10,6 @@ import (
 	"github.com/voilelab/toolgui/toolgui/tgframe"
 )
 
-type pickedImages struct {
-	imgs []imgbook.Image
-	err  error
-}
-
 func ImagesPage(p *tgframe.Params) error {
 	tgcomp.Title(p.Main, tr("🖼️ 圖片轉 EPUB（實驗性）", "🖼️ Images to EPUB (Experimental)"))
 	tgcomp.MessageWarning(p.Main, tr("🧪 此功能仍在實驗階段，輸出結果可能不穩定，請自行確認產生的 EPUB。",
@@ -41,17 +36,16 @@ func ImagesPage(p *tgframe.Params) error {
 	}
 	fileKey := hashOf(hashes...)
 
-	z, fresh := memoFresh(p.State, "images", fileKey, func() pickedImages {
+	imgs, err := p.State.Memo("images", fileKey, func() ([]imgbook.Image, error) {
 		imgs, err := imgbook.Read(picked)
-		return pickedImages{imgs, err}
+		if err == nil {
+			tgcomp.Toast(p.Main, fmt.Sprintf(tr("已讀取 %d 張圖片", "Read %d images"), len(imgs)), &tgcomp.ToastConf{Icon: "🖼️"})
+		}
+		return imgs, err
 	})
-	if z.err != nil {
-		showError(p.Main, toolImages, z.err)
+	if err != nil {
+		showError(p.Main, toolImages, err)
 		return nil
-	}
-	imgs := z.imgs
-	if fresh {
-		tgcomp.Toast(p.Main, fmt.Sprintf(tr("已讀取 %d 張圖片", "Read %d images"), len(imgs)), &tgcomp.ToastConf{Icon: "🖼️"})
 	}
 	stats := tgcomp.Toolbar(p.Main, &tgcomp.ToolbarConf{Base: tgframe.Base{ID: "stats"}})
 	tgcomp.Metric(stats, tr("圖片數", "Images"), strconv.Itoa(len(imgs)))
@@ -78,7 +72,7 @@ func ImagesPage(p *tgframe.Params) error {
 	}
 	meta := metaForm(tabMeta, fileKey, defTitle, "")
 	firstAsCover := false
-	if !meta.hasCover() {
+	if meta.coverFile == nil {
 		firstAsCover = tgcomp.Checkbox(tabMeta, tr("以第一張圖片作為封面", "Use the first image as the cover"))
 	}
 

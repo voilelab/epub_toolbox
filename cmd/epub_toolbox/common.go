@@ -12,29 +12,6 @@ import (
 	"github.com/voilelab/toolgui/toolgui/tgframe"
 )
 
-// memoEntry holds the latest value of a memo slot.
-type memoEntry[T any] struct {
-	key string
-	v   T
-}
-
-// memo returns f() cached in slot, recomputing when key changes.
-// Only the latest value is kept, so memory stays bounded.
-func memo[T any](s *tgframe.State, slot, key string, f func() T) T {
-	v, _ := memoFresh(s, slot, key, f)
-	return v
-}
-
-// memoFresh is memo that also reports whether f ran, i.e. key is new.
-func memoFresh[T any](s *tgframe.State, slot, key string, f func() T) (T, bool) {
-	if e, ok := s.GetFuncCache[memoEntry[T]](slot); ok && e.key == key {
-		return e.v, false
-	}
-	v := f()
-	s.SetFuncCache(slot, memoEntry[T]{key, v})
-	return v, true
-}
-
 func hashOf(parts ...any) string {
 	h := sha256.New()
 	for _, p := range parts {
@@ -53,10 +30,6 @@ type bookMeta struct {
 	Title, Author, Intro, Language string
 
 	coverFile *tgcomp.FileObject
-}
-
-func (m bookMeta) hasCover() bool {
-	return m.coverFile != nil
 }
 
 // cover reads the uploaded cover, or returns nil if none.
@@ -96,20 +69,18 @@ var track = func(event string, data map[string]any) {}
 // exportEpub draws the download button; build runs only on click.
 func exportEpub(c *tgframe.Container, tool, title string, build func() ([]byte, error)) {
 	filename := safeFilename(title) + ".epub"
-	built := false
 	tgcomp.DownloadFileFunc(c, tr("⬇ 下載 ", "⬇ Download ")+filename, func() ([]byte, error) {
 		track("download", map[string]any{"tool": tool})
 		b, err := build()
-		built = err == nil
+		if err == nil {
+			tgcomp.Toast(c, tr("已製作 ", "Made ")+filename, &tgcomp.ToastConf{Icon: "✅"})
+		}
 		return b, err
 	}, &tgcomp.DownloadFileConf{
 		Filename: filename,
 		MIME:     "application/epub+zip",
 		Color:    tcutil.ColorInfo,
 	})
-	if built {
-		tgcomp.Toast(c, tr("已製作 ", "Made ")+filename, &tgcomp.ToastConf{Icon: "✅"})
-	}
 }
 
 // safeFilename replaces characters most file systems reject.

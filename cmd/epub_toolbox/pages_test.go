@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/voilelab/epub_toolbox/internal/i18n"
-	"github.com/voilelab/toolgui/toolgui/tgframe"
 	"github.com/voilelab/toolgui/toolgui/tgtest"
 )
 
@@ -331,24 +330,8 @@ func TestHash(t *testing.T) {
 	}
 }
 
-func TestMemo(t *testing.T) {
-	s := tgframe.NewState()
-	t.Cleanup(s.Destroy)
-	calls := 0
-	f := func() int { calls++; return calls }
-	if memo(s, "x", "k1", f) != 1 || memo(s, "x", "k1", f) != 1 {
-		t.Error("not cached")
-	}
-	if memo(s, "x", "k2", f) != 2 {
-		t.Error("not recomputed on a new key")
-	}
-}
-
 func TestBookMetaNoCover(t *testing.T) {
 	m := bookMeta{}
-	if m.hasCover() {
-		t.Error("hasCover")
-	}
 	if b, err := m.cover(); b != nil || err != nil {
 		t.Errorf("cover = %v, %v", b, err)
 	}
