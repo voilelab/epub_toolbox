@@ -42,7 +42,7 @@ func NovelPage(p *tgframe.Params) error {
 	}
 	fileKey := hashBytes(raw)
 
-	encs := memo(p.State, "encodings", fileKey, func() []string { return novel.Encodings(raw) })
+	encs, _ := p.State.Memo("encodings", fileKey, func() ([]string, error) { return novel.Encodings(raw), nil })
 	encIdx := tgcomp.Select(bar, tr("編碼", "Encoding"), encs, (&tgcomp.SelectConf{
 		Base: tgframe.Base{ID: "encoding_" + fileKey},
 	}).SetDefault(0))
@@ -53,18 +53,18 @@ func NovelPage(p *tgframe.Params) error {
 	removeEmptyLines := tgcomp.Checkbox(bar, tr("移除空行", "Remove empty lines"))
 	stats := tgcomp.Toolbar(p.Main, &tgcomp.ToolbarConf{Base: tgframe.Base{ID: "stats"}})
 
-	text := memo(p.State, "text", fileKey+enc, func() string { return novel.Decode(raw, enc) })
-	lines := memo(p.State, "lines", hashOf(fileKey, enc, removeEmptyLines), func() []string {
-		return novel.Lines(text, removeEmptyLines)
+	text, _ := p.State.Memo("text", fileKey+enc, func() (string, error) { return novel.Decode(raw, enc), nil })
+	lines, _ := p.State.Memo("lines", hashOf(fileKey, enc, removeEmptyLines), func() ([]string, error) {
+		return novel.Lines(text, removeEmptyLines), nil
 	})
 
 	// Detection reads blank lines, so it ignores removeEmptyLines.
-	sugs, fresh := memoFresh(p.State, "suggest", fileKey+enc, func() []novel.Suggestion {
-		return novel.Suggest(novel.Lines(text, false))
-	})
-	if fresh {
+	// Toasts only when a file or encoding is first read.
+	sugs, _ := p.State.Memo("suggest", fileKey+enc, func() ([]novel.Suggestion, error) {
+		sugs := novel.Suggest(novel.Lines(text, false))
 		loadedToast(p.Main, enc, sugs)
-	}
+		return sugs, nil
+	})
 
 	tabChapters, tabMeta, tabStyle := tgcomp.Tab3(p.Main, tr("章節", "Chapters"), tr("書籍資訊", "Book Info"), tr("樣式", "Style"))
 
@@ -219,7 +219,7 @@ func chaptersTab(p *tgframe.Params, tab *tgframe.Container, lines []string, line
 	}
 
 	splitKey := hashOf(linesKey, strings.Join(allow, "\n"), strings.Join(block, "\n"))
-	chs := memo(p.State, "chapters", splitKey, func() []novel.Chapter { return novel.Split(lines, m) })
+	chs, _ := p.State.Memo("chapters", splitKey, func() ([]novel.Chapter, error) { return novel.Split(lines, m), nil })
 	set := chapterSet{all: chs, head: chs[0]}
 
 	if tgcomp.Checkbox(c, tr("移除空章節", "Remove empty chapters")) {
